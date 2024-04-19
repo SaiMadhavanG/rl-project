@@ -9,14 +9,14 @@ class Chunk():
             _IS_weight = None, _transitions = []
             ):
         self.size = _size
-        self._episode_id = _episode_id
-        self._weight = _weight
-        self._tde = _tde
-        self._rewards = _rewards
-        self._estimated_return = _estimated_return
-        self._predescessor_weight = _predescessor_weight
-        self._lastSampled = _lastSampled
-        self._IS_weight = _IS_weight
+        self.episode_id = _episode_id
+        self.weight = _weight
+        self.tde = _tde
+        self.rewards = _rewards
+        self.estimated_return = _estimated_return
+        self.predescessor_weight = _predescessor_weight
+        self.lastSampled = _lastSampled
+        self.IS_weight = _IS_weight
         self.transitions = _transitions
 
 
