@@ -62,10 +62,10 @@ class Chunk():
         trans_len = len(self.transitions)
         if (self.size < trans_len):
             n_remove = trans_len - self.size
-            transitions = transitions[n_remove:]
+            self.transitions = self.transitions[n_remove:]
 
         elif (self.size > trans_len):
-            last_transition = transitions[-1]
+            last_transition = self.transitions[-1]
             n_replicas = self.size - trans_len
             replicas = [last_transition] * n_replicas
-            transitions.extend(replicas)
+            self.transitions.extend(replicas)
