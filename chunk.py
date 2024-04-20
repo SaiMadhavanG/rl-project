@@ -4,20 +4,21 @@ class Chunk():
 
     # size has to be given while creating the  object
     def __init__(
-            self, _size, _episode_id = None, _weight = None, _tde = None, _rewards = None,
-            _estimated_return = None, _predescessor_weight = None, _lastSampled = None,
-            _IS_weight = None, _transitions = []
+            self, _size, _episode_id = None, _weight = None, _tde = None, _rewards = None, _estimated_return = None, _lastSampled = 0,
+            _IS_weight = None, _transitions = [], _probablity = 0, _frequency_ratio_current=None, _frequency_ratio_global=None
             ):
         self.size = _size
+        self.transitions = _transitions
         self.episode_id = _episode_id
         self.weight = _weight
         self.tde = _tde
         self.rewards = _rewards
         self.estimated_return = _estimated_return
-        self.predescessor_weight = _predescessor_weight
         self.lastSampled = _lastSampled
         self.IS_weight = _IS_weight
-        self.transitions = _transitions
+        self.probablity = _probablity
+        self.frequency_ration_current = _frequency_ratio_current
+        self.frequency_ration_global = _frequency_ratio_global
 
 
     # SETTERS FOR ALL ATTRIBUTES
@@ -39,14 +40,20 @@ class Chunk():
     def set_estimated_return(self, _estimated_return):
         self.estimated_return = _estimated_return
 
-    def set_predecessor_weight(self, _predescessor_weight):
-        self.predescessor_weight = _predescessor_weight
-
     def set_lastSampled(self, _lastSampled):
         self.lastSampled = _lastSampled
 
     def set_IS_weight(self, _IS_weight):
         self.IS_weight = _IS_weight
+
+    def set_frequency_ratio_current(self, fr_ratio_current):
+        self.frequency_ration_current = fr_ratio_current
+
+    def set_frequency_ratio_global(self, fr_ratio_global):
+        self.frequency_ration_global = fr_ratio_global
+    
+    def set_probablity(self, _probablity):
+        self.probablity = _probablity
 
 
 
