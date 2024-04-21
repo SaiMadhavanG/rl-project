@@ -35,8 +35,8 @@ class Tracker:
         for chunk in self.replay_buffer.chunks:
 
             if frequency_mode == "current":
-                fr_ratio = self.replay_buffer.get_current_frequency_ratio(chunk)
+                fr_ratio = self.replay_buffer.frequencyRatio(chunk)
                 chunk.set_frequency_ratio_current(fr_ratio)
             else:
-                fr_ratio = self.replay_buffer.get_global_frequency_ratio(chunk)
+                fr_ratio = self.replay_buffer.frequencyRatio(chunk)
                 chunk.set_frequency_ratio_global(fr_ratio)
