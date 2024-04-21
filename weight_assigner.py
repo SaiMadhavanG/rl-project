@@ -99,3 +99,13 @@ class Weight_assigner:
             totalWeight += chunk.weight
         for chunk in self.replay_buffer.chunks:
             chunk.set_probablity(chunk.weight / totalWeight)
+
+
+class UniformAssigner:
+    def __init__(self, _replay_buffer: ReplayBuffer):
+        self.replay_buffer = _replay_buffer
+
+    def set_probablities(self):
+        totalWeight = len(self.replay_buffer.chunks)
+        for chunk in self.replay_buffer.chunks:
+            chunk.set_probablity(1 / totalWeight)

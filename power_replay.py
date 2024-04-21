@@ -1,20 +1,33 @@
 from sampler import Sampler
 from transition_chunk import Chunk
+from weight_assigner import Weight_assigner, UniformAssigner
+from replay_buffer import ReplayBuffer
 
 
 class PowerReplay:
-    def __init__(
-        self, buffer, weight_assigner, weight_factors, batch_size, chunk_size
-    ) -> None:
-        self.buffer = buffer
-        self.weight_assigner = weight_assigner
+    def __init__(self, size, batch_size, chunk_size, weight_factors, mode) -> None:
+        # TODO move buffer initialization in here
+        self.size = size
+        self.buffer = ReplayBuffer(size)
+        if mode == "uniform":
+            self.weight_assigner = UniformAssigner(self.buffer)
+        else:
+            raise Exception("Implementation pending")
+        # TODO initialize weight Assigner using
         self.weight_factors = weight_factors
         self.batch_size = batch_size
         self.sampler = Sampler(batch_size)
         self.chunk_size = chunk_size
 
+    def samplable(self):
+        return len(self.buffer.chunks) >= self.size
+
     def getBatch(self):
-        return self.sampler.sample(self.buffer)
+        chunks = self.sampler.sample(self.buffer)
+        transitions = []
+        for chunk in chunks:
+            transitions.extend(chunk.transitions)
+        return transitions
 
     def addTransitions(self, transitions, episode_id):
         while len(transitions) > self.chunk_size:
@@ -26,3 +39,4 @@ class PowerReplay:
                 transitions.pop(0)
         chunk = Chunk(self.chunk_size, episode_id, _transitions=transitions)
         self.buffer.addChunk(chunk)
+        self.weight_assigner.set_probablities()

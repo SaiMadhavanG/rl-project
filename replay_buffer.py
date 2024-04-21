@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import numpy as np
 
 
 class FrequencyHistogram:
@@ -9,7 +10,7 @@ class FrequencyHistogram:
         self.dicts = [OrderedDict() for i in range(self.n_dim)]
         for i in range(len(self.dicts)):
             assert len(self.ranges[i]) == 3
-            for j in range(self.ranges[i][0], self.ranges[i][1], self.ranges[i][2]):
+            for j in np.arange(self.ranges[i][0], self.ranges[i][1], self.ranges[i][2]):
                 self.dicts[i][j] = 0
 
     def __getitem__(self, _keys):
@@ -56,39 +57,53 @@ class FrequencyHistogram:
 
 class ReplayBuffer:
     def __init__(
-        self, _size, _chunks, n_dim, _frequency_hist_ranges, _frequency_mode="current"
+        self,
+        _size,
+        _chunks=[],
+        n_dim=None,
+        _frequency_hist_ranges=[],
+        _frequency_mode="current",
     ) -> None:
         """
         n_dim is state vector size needed for making histogram
         _frequency_hist_range should be a tuple containing 3 values (start, end, step)
         """
-        self.size = _size
+        self.size = int(_size)
         self.chunks = list(_chunks)
-        self.frequency_histogram = FrequencyHistogram(n_dim, _frequency_hist_ranges)
+
+        self.frequency_histogram = (
+            FrequencyHistogram(n_dim, _frequency_hist_ranges)
+            if _frequency_hist_ranges
+            else None
+        )
         self.frequncy_mode = _frequency_mode
 
     def addChunk(self, chunk):
         self.chunks.append(chunk)
-        state_v = chunk.getAvgState()
-        self.frequency_histogram.addOne(state_v)
+        if self.frequency_histogram:
+            state_v = chunk.getAvgState()
+            self.frequency_histogram.addOne(state_v)
 
         while len(self.chunks) > self.size:
             self.removeChunk()
 
     def removeChunk(self):
         chunk = self.chunks.pop(0)
-        state_v = chunk.getAvgState()
-        if self.frequncy_mode == "current":
+        if self.frequncy_mode == "current" and self.frequency_histogram:
+            state_v = chunk.getAvgState()
             self.frequency_histogram.removeOne(state_v)
 
     def frequencyRatio(self, chunk):
-        state_v = chunk.getAvgState()
-        freq = self.frequency_histogram[state_v]
-        tot = self.frequency_histogram.total()
-        ratio = []
-        for i in range(len(freq)):
-            ratio.append(freq[i] / tot[i])
-        return ratio
+        if self.frequency_histogram:
+            state_v = chunk.getAvgState()
+            freq = self.frequency_histogram[state_v]
+            tot = self.frequency_histogram.total()
+            ratio = []
+            for i in range(len(freq)):
+                ratio.append(freq[i] / tot[i])
+            return ratio
+        else:
+            raise Exception("Frequency histogram not initialized")
 
-    def getProbabilites(self):
-        return [chunk.getProbability() for chunk in self.chunks]
+    def getProbabilities(self):
+        return [chunk.probablity for chunk in self.chunks]

@@ -18,7 +18,9 @@ class DQNAgent:
         rand = np.random.random()
         if rand < epsilon:
             return np.random.choice(self.numActions)
-        Q = net(state.to(self.device))
+        state = torch.tensor(state)
+        with torch.no_grad():
+            Q = net(state.to(self.device))
         return torch.argmax(Q[0]).item()
 
 

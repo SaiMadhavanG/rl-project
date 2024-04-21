@@ -28,4 +28,4 @@ class CartPoleEnvironment(Envionment):
         return self.env.reset()
 
     def step(self, action):
-        self.env.step(action)
+        return self.env.step(action)

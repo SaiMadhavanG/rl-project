@@ -3,7 +3,7 @@ import random
 
 class Sampler:
     def __init__(self, batch_size):
-        self.batch_size = batch_size
+        self.batch_size = int(batch_size)
 
     def sample(self, buffer):
         assert buffer.size >= self.batch_size
