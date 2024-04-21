@@ -2,30 +2,53 @@ import torch.nn as nn
 import torch
 
 class AgentTrainer:
-    def __init__(self, agent, env, optimizer, power_replay, logger, max_num_steps, epsilon, epsilon_decay, min_epsilon, gamma, sampler, device='cpu'):
-        self.device = device
+    """
+    This class is used to train an agent in an environment. It uses a given agent, environment, logger, and optimizer.
+    It also uses a power replay for the agent's memory and has parameters for the maximum number of steps, epsilon, epsilon decay, 
+    minimum epsilon, gamma, and device.
+    """
+
+    def __init__(
+        self, 
+        agent, 
+        env, 
+        logger, 
+        optimizer, 
+        power_replay, 
+        max_num_steps   =   1000, 
+        epsilon         =   1.0, 
+        epsilon_decay   =   0.99, 
+        min_epsilon     =   0.01, 
+        gamma           =   0.99,
+        device          =   'cpu'
+    ):         
+
+        self.device = torch.device(device)
         self.agent = agent
         self.env = env
         self.optimizer = optimizer
-        self.loss_fn = nn.MSELoss() # to be done MSE
+        self.loss_fn = nn.MSELoss()
         self.power_replay = power_replay
         self.logger = logger
-        self.max_num_steps = num_steps
+        self.max_num_steps = max_num_steps
         self._steps_done = 1
-        self._inference_mode = False
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
         self.gamma = gamma
-        self.sampler = sampler
 
 
     def train_step(self):
+        """
+        Train the agent for a single step
+        """
+
         score = 0
         self.optimizer.zero_grad()
         state, _ = self.env.reset()
-        
-        for _ in range(self.num_steps):
+        done = False
+
+        while done:
             # action selection
             action = self.agent.selectAction(state, self.epsilon)
             next_state, reward, done, _ = self.env.step(action)
@@ -36,8 +59,7 @@ class AgentTrainer:
             
             score += reward     # update score
 
-
-            train_batch = self.sampler.sample_batch()
+            train_batch = self.power_replay.getBatch()
             state = self._get_states_tensor(train_batch, 0)
             next_state = self._get_states_tensor(train_batch, 3)
 
@@ -47,11 +69,11 @@ class AgentTrainer:
 
             # calc returns for training
             for i in range(len(train_batch)):
-                q_estimates[i][train_batch[i][1]] = train_batch[i][2] + self.gamma * torch.max(next_state_q_vals[i]).item()
+                q_vals[i][train_batch[i][1]] = train_batch[i][2] + self.gamma * torch.max(next_state_q_vals[i]).item()
 
 
-            train_ds = torch.utils.data.TensorDataset(state, q_estimates)
-            train_dl = torch.utils.data.DataLoader(train_ds, batch_size=self.batch_size, shuffle=True)
+            train_ds = torch.utils.data.TensorDataset(state, q_vals)
+            train_dl = torch.utils.data.DataLoader(train_ds, batch_size=self.power_replay.batch_size, shuffle=True)
 
             self.agent.network.train()
             
@@ -62,62 +84,77 @@ class AgentTrainer:
                 loss = self.loss_fn(out, q_estimates.to(self.device))
                 tot_loss += loss.item()
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
-            self.agent.network.eval()   
-
+            self.agent.network.eval()
+            
             if done:
                 break
-
-            
+        
         self.epsilon = self._decay_epsilon(self.epsilon, self.epsilon_decay, self.min_epsilon)
 
 
         return score
 
     def train_steps(self, num_steps):
+        """
+        Train the agent for a number of steps
+        """
+        
+        tau = 0.05      # target network update rate
+
         for _ in range(num_steps):
             score = self.train_step()
             self.logger.log("score", score, self._steps_done)
             self._steps_done += 1
 
-
-            # update target netword ---> immedeately or after few steps??? 
-            self.agent.targetNetwork.load_state_dict(self.agent.network)
+            for target_param, policy_param in zip(self.agent.targetNetwork.parameters(), self.agent.network.parameters()):
+                target_param.data.copy_(tau * policy_param.data + (1.0 - tau) * target_param.data)
+            
             self.agent.targetNetwork.eval()
 
 
 
     def save(self, path):
+        """
+        Save the target network to a file
+        """
         self.agent.targetNetwork.save(path)
 
     def load(self, path):
+        """
+        Load the target network from a file
+        """
         self.agent.targetNetwork.load(path)
 
     def inference_mode(self, num_episodes):
+        """
+        Run the agent in inference mode for a number of episodes
+        """
         state, _ = self.env.reset()
         score = 0
-        for _ in range(num_episodes):
-            action = self.agent.selectAction(state)
-            next_state, reward, done, _ = self.env.step(action)
-            state = next_state
-            score += reward
-            if done:
-                break
+        with torch.no_grad():
+            for _ in range(num_episodes):
+                action = self.agent.selectAction(state)
+                next_state, reward, done, _ = self.env.step(action)
+                state = next_state
+                score += reward
+                if done:
+                    break
 
         return score
 
-    def _get_states_tensor(sample, states_idx):
-        sample_len = len(sample)
+    def _get_states_tensor(self, sample, states_idx):
+        sample_len = len(sample)        # number of samples in the batch
+        n_features = len(sample[0])     # number of states in the env
+
         states_tensor = torch.empty((sample_len, n_features), dtype=torch.float32, requires_grad=False)
 
-        features_range = range(n_features)
         for i in range(sample_len):
-            for j in features_range:
+            for j in range(n_features):
                 states_tensor[i, j] = sample[i][states_idx][j].item()
-
         return states_tensor
 
-    def _decay_epsilon(ep, ep_decay, min_ep):
+    def _decay_epsilon(self, ep, ep_decay, min_ep):
         ep *= ep_decay
         return max(min_ep, ep)
