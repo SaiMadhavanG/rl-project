@@ -10,7 +10,7 @@ device = "cuda"
 
 agent = DQNAgent(2, 4, device=device)
 env = CartPoleEnvironment()
-logger = Logger("cf-6")
+logger = Logger("cf-7")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
 powerReplay = PowerReplay(600, 128, 1, [], "uniform")
 

@@ -101,7 +101,7 @@ class AgentTrainer:
                     # Calculate target Q-value using target network
                     y = transition.reward + self.gamma * torch.max(Q_S_[idx])
                 self.actionsHistory.append(transition.action)
-                Y[idx, action] = y
+                Y[idx, transition.action] = y
 
             # Set network back to training mode
             self.agent.network.train()
@@ -151,7 +151,7 @@ class AgentTrainer:
                 )
 
             self.agent.targetNetwork.eval()
-            if self.episode_id % 20 == 0:
+            if self.episode_id % 5 == 0:
                 score = self.inference_mode()
                 self.logger.log("inference", score, self.episode_id)
 
