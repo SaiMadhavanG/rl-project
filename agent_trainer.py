@@ -28,7 +28,7 @@ class AgentTrainer:
         min_epsilon=0.01,
         gamma=0.99,
         device="cpu",
-        tau=0.1,
+        update_frequency=3,
         render_env=None,
     ):
 
@@ -45,7 +45,7 @@ class AgentTrainer:
         self.min_epsilon = min_epsilon
         self.gamma = gamma
         self.episode_id = 0
-        self.tau = tau
+        self.update_frequency = update_frequency
         self.render_env = render_env if render_env else self.env
 
     def my_loss(self, y_pred, y_true):
@@ -145,11 +145,16 @@ class AgentTrainer:
             self.logger.log("steps", self._steps_done, self.episode_id)
             self.logger.log("epsilon", self.epsilon, self.episode_id)
 
-            for target_param, policy_param in zip(
-                self.agent.targetNetwork.parameters(), self.agent.network.parameters()
-            ):
-                target_param.data.copy_(
-                    self.tau * policy_param.data + (1.0 - self.tau) * target_param.data
+            # for target_param, policy_param in zip(
+            #     self.agent.targetNetwork.parameters(), self.agent.network.parameters()
+            # ):
+            #     target_param.data.copy_(
+            #         self.tau * policy_param.data + (1.0 - self.tau) * target_param.data
+            #     )
+
+            if self.episode_id % self.update_frequency == 0:
+                self.agent.targetNetwork.load_state_dict(
+                    self.agent.network.state_dict()
                 )
 
             self.agent.targetNetwork.eval()
