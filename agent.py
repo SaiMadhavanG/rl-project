@@ -21,7 +21,7 @@ class DQNAgent:
         state = torch.tensor(state)
         with torch.no_grad():
             Q = net(state.to(self.device))
-        return torch.argmax(Q[0]).item()
+        return torch.argmax(Q).item()
 
 
 class DQNAtariAgent(DQNAgent):

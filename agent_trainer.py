@@ -1,5 +1,7 @@
+from networkx import transitive_closure
 import torch.nn as nn
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
 from transiton import Transition
@@ -33,7 +35,6 @@ class AgentTrainer:
         self.agent = agent
         self.env = env
         self.optimizer = optimizer
-        self.loss_fn = nn.MSELoss()
         self.power_replay = power_replay
         self.logger = logger
         self.max_num_steps = max_num_steps
@@ -45,13 +46,21 @@ class AgentTrainer:
         self.episode_id = 0
         self.tau = tau
 
+    def my_loss(self, y_pred, y_true):
+        # Calculate mean squared error loss only for the actions taken
+        s1, s2 = y_true.shape
+        loss = F.mse_loss(
+            y_pred[torch.arange(s1), self.actionsHistory],
+            y_true[torch.arange(s1), self.actionsHistory],
+        )
+        return loss
+
     def train_episode(self):
         """
         Train the agent for a single episode
         """
 
         score = 0
-        self.optimizer.zero_grad()
         state, _ = self.env.reset()
         done = False
         total_next_qs = []
@@ -59,49 +68,56 @@ class AgentTrainer:
         while not done:
             # TODO handle addition for larger chunks
 
-            action = self.agent.selectAction(state, self.epsilon)
+            action = self.agent.selectAction(
+                state, epsilon=self.epsilon, network="current"
+            )
             next_state, reward, done, _, _ = self.env.step(action)
-            transition = Transition(state, action, reward, next_state)
+            transition = Transition(state, action, reward, next_state, done)
             self.power_replay.addTransitions([transition], self.episode_id)
             state = next_state
 
             score += reward  # update score
 
             train_batch = self.power_replay.getBatch()
-            states = self.get_states_tensor(train_batch)
-            next_states = self.get_next_states_tensor(train_batch)
+            currentStateBatch = self.get_states_tensor(train_batch)
+            nextStateBatch = self.get_next_states_tensor(train_batch)
 
             # q estimates for training
-            q_vals = self.agent.network(states.to(self.device)).detach()
-            next_state_q_vals = self.agent.targetNetwork(
-                next_states.to(self.device)
-            ).detach()
+            self.agent.targetNetwork.eval()
+            Q_S_ = self.agent.targetNetwork(
+                nextStateBatch.to(self.device)
+            )  # Compute Q-values for next states
 
-            total_next_qs.append(next_state_q_vals.sum())
-
-            # calc returns for training
-            for i in range(len(train_batch)):
-                q_vals[i][train_batch[i].action] = (
-                    train_batch[i].reward
-                    + self.gamma * torch.max(next_state_q_vals[i]).item()
-                )
-
-            train_ds = TensorDataset(states, q_vals)
-            train_dl = DataLoader(
-                train_ds, batch_size=self.power_replay.batch_size, shuffle=True
+            Y = torch.zeros((self.power_replay.batch_size, self.agent.numActions)).to(
+                self.device
             )
+            self.actionsHistory = []
+            rewards_batch = []
+            for idx, transition in enumerate(train_batch):
+                rewards_batch.append(reward)
+                if transition.terminated:
+                    y = transition.reward
+                else:
+                    # Calculate target Q-value using target network
+                    y = transition.reward + self.gamma * torch.max(Q_S_[idx])
+                self.actionsHistory.append(transition.action)
+                Y[idx, action] = y
 
+            # Set network back to training mode
             self.agent.network.train()
 
-            # train policy net
-            tot_loss = 0.0
-            for st, q_estimates in train_dl:
-                out = self.agent.network(st.to(self.device))
-                loss = self.loss_fn(out, q_estimates.to(self.device))
-                tot_loss += loss.item()
-                loss.backward()
-                self.optimizer.step()
+            # Zero out gradients
+            self.optimizer.zero_grad()
 
+            # Compute Q-values for current states
+            QS = self.agent.network(currentStateBatch.to(self.device))
+
+            # Compute loss and backpropagate
+            loss = self.my_loss(QS, Y)
+            loss.backward()
+            self.optimizer.step()  # Update network parameters
+
+            total_next_qs.append(Q_S_.flatten().sum().item())
             self._steps_done += 1
 
             if done:
@@ -146,9 +162,9 @@ class AgentTrainer:
             state, _ = self.env.reset()
             done = False
             while not done:
-                action = self.agent.selectAction(state, self.epsilon)
+                action = self.agent.selectAction(state, epsilon=1)
                 next_state, reward, done, _, _ = self.env.step(action)
-                transition = Transition(state, action, reward, next_state)
+                transition = Transition(state, action, reward, next_state, done)
                 self.power_replay.addTransitions([transition], self.episode_id)
                 state = next_state
 

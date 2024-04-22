@@ -6,9 +6,9 @@ import cv2
 
 def createMLP(inDim, outDim, device):
     return nn.Sequential(
-        nn.Linear(inDim, 128),
+        nn.Linear(inDim, 64),
         nn.ReLU(),
-        nn.Linear(128, 64),
+        nn.Linear(64, 64),
         nn.ReLU(),
         nn.Linear(64, 32),
         nn.ReLU(),
