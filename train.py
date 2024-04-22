@@ -10,7 +10,7 @@ device = "cuda"
 agent = DQNAgent(2, 4, device=device)
 env = CartPoleEnvironment()
 render_env = CartPoleEnvironment("human")
-logger = Logger("cf-16")
+logger = Logger("cf-17")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
 powerReplay = PowerReplay(1e4, 128, 1, [], "uniform")
 
@@ -21,10 +21,11 @@ trainer = AgentTrainer(
     optimizer,
     powerReplay,
     device=device,
-    epsilon=0.2,
-    epsilon_decay=3e-3,
+    epsilon=0.3,
+    epsilon_decay=2e-3,
     gamma=0.99,
     render_env=render_env,
+    update_frequency=8,
 )
 
 # pdb.set_trace()
