@@ -29,6 +29,7 @@ class AgentTrainer:
         gamma=0.99,
         device="cpu",
         tau=0.1,
+        render_env=None,
     ):
 
         self.device = torch.device(device)
@@ -45,6 +46,7 @@ class AgentTrainer:
         self.gamma = gamma
         self.episode_id = 0
         self.tau = tau
+        self.render_env = render_env if render_env else self.env
 
     def my_loss(self, y_pred, y_true):
         # Calculate mean squared error loss only for the actions taken
@@ -155,6 +157,11 @@ class AgentTrainer:
                 score = self.inference_mode()
                 self.logger.log("inference", score, self.episode_id)
 
+            # if self.episode_id % 10 == 0:
+            #     self.save(
+            #         "checkpoints/" + self.logger.exptId + "/" + self.episode_id + ".pth"
+            #     )
+
             self.episode_id += 1
 
     def fill_buffer(self):
@@ -184,13 +191,13 @@ class AgentTrainer:
         """
         Run the agent in inference mode for a number of episodes
         """
-        state, _ = self.env.reset()
+        state, _ = self.render_env.reset()
         done = False
         score = 0
         with torch.no_grad():
             while not done:
                 action = self.agent.selectAction(state)
-                next_state, reward, done, _, _ = self.env.step(action)
+                next_state, reward, done, _, _ = self.render_env.step(action)
                 state = next_state
                 score += reward
 
@@ -225,5 +232,5 @@ class AgentTrainer:
         return states_tensor
 
     def _decay_epsilon(self, ep, ep_decay, min_ep):
-        ep *= ep_decay
+        ep -= ep_decay
         return max(min_ep, ep)
