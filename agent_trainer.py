@@ -75,7 +75,9 @@ class AgentTrainer:
         while not done:
             # TODO handle addition for larger chunks
 
-            action = self.agent.selectAction(state, epsilon=self.epsilon)
+            action = self.agent.selectAction(
+                state, epsilon=self.epsilon, network="current"
+            )
             next_state, reward, done, _, _ = self.env.step(action)
             transition = Transition(state, action, reward, next_state, done)
             self.power_replay.addTransitions([transition], self.episode_id)
