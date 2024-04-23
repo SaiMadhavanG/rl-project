@@ -1,11 +1,15 @@
-from networkx import transitive_closure
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, TensorDataset
+import os
 
 from transiton import Transition
 from power_replay import PowerReplay
+
+
+def createDir(dir):
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
 
 
 class AgentTrainer:
@@ -47,6 +51,7 @@ class AgentTrainer:
         self.episode_id = 0
         self.update_frequency = update_frequency
         self.render_env = render_env if render_env else self.env
+        self.checkpointDir = "checkpoints/" + self.logger.exptId
 
     def my_loss(self, y_pred, y_true):
         # Calculate mean squared error loss only for the actions taken
@@ -70,9 +75,7 @@ class AgentTrainer:
         while not done:
             # TODO handle addition for larger chunks
 
-            action = self.agent.selectAction(
-                state, epsilon=self.epsilon, network="current"
-            )
+            action = self.agent.selectAction(state, epsilon=self.epsilon)
             next_state, reward, done, _, _ = self.env.step(action)
             transition = Transition(state, action, reward, next_state, done)
             self.power_replay.addTransitions([transition], self.episode_id)
@@ -162,10 +165,8 @@ class AgentTrainer:
                 score = self.inference_mode()
                 self.logger.log("inference", score, self.episode_id)
 
-            # if self.episode_id % 10 == 0:
-            #     self.save(
-            #         "checkpoints/" + self.logger.exptId + "/" + self.episode_id + ".pth"
-            #     )
+            if self.episode_id % 50 == 0:
+                self.save()
 
             self.episode_id += 1
 
@@ -180,11 +181,15 @@ class AgentTrainer:
                 self.power_replay.addTransitions([transition], self.episode_id)
                 state = next_state
 
-    def save(self, path):
+    def save(self):
         """
         Save the target network to a file
         """
-        self.agent.targetNetwork.save(path)
+        createDir(self.checkpointDir)
+        checkpointPath = os.path.join(
+            self.checkpointDir, f"checkpoint-{self.episode_id}.pth"
+        )
+        torch.save(self.agent.targetNetwork.state_dict(), checkpointPath)
 
     def load(self, path):
         """
