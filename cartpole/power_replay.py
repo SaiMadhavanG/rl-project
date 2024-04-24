@@ -11,6 +11,8 @@ class PowerReplay:
         self.buffer = ReplayBuffer(size)
         if mode == "uniform":
             self.weight_assigner = UniformAssigner(self.buffer)
+        elif mode == "tde":
+            self.weight_assigner = Weight_assigner(self.buffer, _tde_factor=1)
         else:
             raise Exception("Implementation pending")
         # TODO initialize weight Assigner using
@@ -27,7 +29,7 @@ class PowerReplay:
         transitions = []
         for chunk in chunks:
             transitions.extend(chunk.transitions)
-        return transitions
+        return transitions, chunks
 
     def addTransitions(self, transitions, episode_id):
         while len(transitions) > self.chunk_size:
@@ -39,4 +41,7 @@ class PowerReplay:
                 transitions.pop(0)
         chunk = Chunk(self.chunk_size, episode_id, _transitions=transitions)
         self.buffer.addChunk(chunk)
+
+    def sweep(self):
+        self.weight_assigner.set_weights()
         self.weight_assigner.set_probablities()

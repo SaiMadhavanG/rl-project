@@ -5,6 +5,7 @@ import os
 
 from transiton import Transition
 from power_replay import PowerReplay
+from tracker import Tracker
 
 
 def createDir(dir):
@@ -52,6 +53,7 @@ class AgentTrainer:
         self.update_frequency = update_frequency
         self.render_env = render_env if render_env else self.env
         self.checkpointDir = "checkpoints/" + self.logger.exptId
+        self.tracker = Tracker(self.power_replay.buffer)
 
     def my_loss(self, y_pred, y_true):
         # Calculate mean squared error loss only for the actions taken
@@ -61,6 +63,19 @@ class AgentTrainer:
             y_true[torch.arange(s1), self.actionsHistory],
         )
         return loss
+
+    def calculate_tde(self, transition):
+        with torch.no_grad():
+            Q_S_ = self.agent.targetNetwork(
+                torch.tensor(transition.nextState).to(self.device)
+            )
+            if transition.terminated:
+                y = transition.reward
+            else:
+                # Calculate target Q-value using target network
+                y = transition.reward + self.gamma * torch.max(Q_S_)
+            QS = self.agent.network(torch.tensor(transition.state).to(self.device))
+            return (y - QS[transition.action].item()) ** 2
 
     def train_episode(self):
         """
@@ -80,12 +95,17 @@ class AgentTrainer:
             )
             next_state, reward, done, _, _ = self.env.step(action)
             transition = Transition(state, action, reward, next_state, done)
+            tde_ = self.calculate_tde(transition)
+            transition.setTDE(tde_)
             self.power_replay.addTransitions([transition], self.episode_id)
+            self.tracker.set_tde(self.power_replay.buffer.chunks[-1])
             state = next_state
 
             score += reward  # update score
 
-            train_batch = self.power_replay.getBatch()
+            self.power_replay.sweep()
+
+            train_batch, train_chunks = self.power_replay.getBatch()
             currentStateBatch = self.get_states_tensor(train_batch)
             nextStateBatch = self.get_next_states_tensor(train_batch)
 
@@ -98,6 +118,7 @@ class AgentTrainer:
             Y = torch.zeros((self.power_replay.batch_size, self.agent.numActions)).to(
                 self.device
             )
+            QS = self.agent.network(currentStateBatch.to(self.device))
             self.actionsHistory = []
             rewards_batch = []
             for idx, transition in enumerate(train_batch):
@@ -109,6 +130,11 @@ class AgentTrainer:
                     y = transition.reward + self.gamma * torch.max(Q_S_[idx])
                 self.actionsHistory.append(transition.action)
                 Y[idx, transition.action] = y
+                tde = (y - QS[idx, transition.action].item()) ** 2
+                transition.setTDE(tde)
+
+            for chunk in train_chunks:
+                self.tracker.set_tde(chunk)
 
             # Set network back to training mode
             self.agent.network.train()
@@ -117,7 +143,6 @@ class AgentTrainer:
             self.optimizer.zero_grad()
 
             # Compute Q-values for current states
-            QS = self.agent.network(currentStateBatch.to(self.device))
 
             # Compute loss and backpropagate
             loss = self.my_loss(QS, Y)

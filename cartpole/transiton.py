@@ -5,6 +5,7 @@ class Transition:
         self.reward = reward
         self.nextState = nextState
         self.terminated = terminated
+        self.tde = 0
 
     def getState(self):
         return self.state
@@ -17,3 +18,6 @@ class Transition:
 
     def getNextState(self):
         return self.nextState
+
+    def setTDE(self, tde):
+        self.tde = tde

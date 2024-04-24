@@ -9,14 +9,14 @@ class Weight_assigner:
     def __init__(
         self,
         _replay_buffer: ReplayBuffer,
-        iteration_num,
-        _tde_factor,
-        _reward_factor,
-        _estimated_return_factor,
-        _fr_ratio_current_factor,
-        _fr_ratio_global_factor,
-        _trace_factor,
-        _staleness_factor,
+        iteration_num=0,
+        _tde_factor=0,
+        _reward_factor=0,
+        _estimated_return_factor=0,
+        _fr_ratio_current_factor=0,
+        _fr_ratio_global_factor=0,
+        _trace_factor=0,
+        _staleness_factor=0,
     ):
 
         self.replay_buffer = _replay_buffer
@@ -68,7 +68,8 @@ class Weight_assigner:
         )
 
     # Assigns the weight to every chunk in the replay buffer
-    def set_weights(self, trace_multiplier=0.1):
+    def set_weights(self):
+        trace_multiplier = self.trace_factor
         replay_size = len(self.replay_buffer.chunks)
 
         # The latest chunk wont have any trace
@@ -104,6 +105,9 @@ class Weight_assigner:
 class UniformAssigner:
     def __init__(self, _replay_buffer: ReplayBuffer):
         self.replay_buffer = _replay_buffer
+
+    def set_weights(self):
+        pass
 
     def set_probablities(self):
         totalWeight = len(self.replay_buffer.chunks)

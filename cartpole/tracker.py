@@ -14,8 +14,11 @@ class Tracker:
         For all of this the value to be assigned has to be provided by the user of this class
     """
 
-    def set_tde(self, chunk: Chunk, tde):
-        chunk.set_tde(tde)
+    def set_tde(self, chunk: Chunk):
+        tde = []
+        for transition in chunk.transitions:
+            tde.append(transition.tde)
+        chunk.set_tde(sum(tde) / len(tde))
 
     def set_estimated_return(self, chunk: Chunk, estimated_return):
         chunk.set_rewards(estimated_return)

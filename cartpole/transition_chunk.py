@@ -7,16 +7,16 @@ class Chunk:
         self,
         _size,
         _episode_id=None,
-        _weight=None,
-        _tde=None,
-        _rewards=None,
-        _estimated_return=None,
+        _weight=0,
+        _tde=0,
+        _rewards=0,
+        _estimated_return=0,
         _lastSampled=0,
-        _IS_weight=None,
+        _IS_weight=0,
         _transitions=[],
         _probablity=0,
-        _frequency_ratio_current=None,
-        _frequency_ratio_global=None,
+        _frequency_ratio_current=0,
+        _frequency_ratio_global=0,
     ):
         self.size = _size
         self.transitions = _transitions
