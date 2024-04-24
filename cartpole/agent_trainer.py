@@ -53,6 +53,9 @@ class AgentTrainer:
         self.render_env = render_env if render_env else self.env
         self.checkpointDir = "checkpoints/" + self.logger.exptId
 
+
+
+
     def my_loss(self, y_pred, y_true):
         # Calculate mean squared error loss only for the actions taken
         s1, s2 = y_true.shape
@@ -61,6 +64,8 @@ class AgentTrainer:
             y_true[torch.arange(s1), self.actionsHistory],
         )
         return loss
+
+
 
     def train_episode(self):
         """

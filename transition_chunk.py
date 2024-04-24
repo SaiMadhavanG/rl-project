@@ -82,3 +82,15 @@ class Chunk:
             n_replicas = self.size - trans_len
             replicas = [last_transition] * n_replicas
             self.transitions.extend(replicas)
+            
+    
+    
+    #new Methods for checking if chunk is complete or partially complete
+    def isComplete(self):
+        num_transitions = len(self.transitions)
+        if (num_transitions == 0):
+            return 0     # reflects that chunk is empty
+        elif (num_transitions == self.size):
+            return 1     # reflects that chunk is complete
+        else:
+            return 2     # reflects that either chunk is partially filled or over filled

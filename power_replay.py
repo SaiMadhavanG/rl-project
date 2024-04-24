@@ -40,3 +40,10 @@ class PowerReplay:
         chunk = Chunk(self.chunk_size, episode_id, _transitions=transitions)
         self.buffer.addChunk(chunk)
         self.weight_assigner.set_probablities()
+        
+        
+    # new method to add the chunk to the buffer
+    def addChunk(self, chunk):
+        if (chunk.isComplete() == 2) : chunk.pad_transitions()
+        self.buffer.addChunk(chunk)
+        self.weight_assigner.set_probablities()

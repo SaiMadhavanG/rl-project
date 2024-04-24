@@ -4,13 +4,22 @@ import numpy as np
 import cv2
 
 
+# def createMLP(inDim, outDim, device):
+#     return nn.Sequential(
+#         nn.Linear(inDim, 64),
+#         nn.ReLU(),
+#         nn.Linear(64, 64),
+#         nn.ReLU(),
+#         nn.Linear(64, 32),
+#         nn.ReLU(),
+#         nn.Linear(32, outDim),
+#     ).to(device)
+    
 def createMLP(inDim, outDim, device):
     return nn.Sequential(
-        nn.Linear(inDim, 64),
+        nn.Linear(inDim, 32),
         nn.ReLU(),
-        nn.Linear(64, 64),
-        nn.ReLU(),
-        nn.Linear(64, 32),
+        nn.Linear(32, 32),
         nn.ReLU(),
         nn.Linear(32, outDim),
     ).to(device)

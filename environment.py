@@ -29,6 +29,21 @@ class CartPoleEnvironment(Envionment):
 
     def step(self, action):
         return self.env.step(action)
+    
+    
+class MountainCarEnvironment(Envionment):
+    def __init__(self, render_mode="") -> None:
+        super().__init__()
+        if render_mode:
+            self.env = gym.make("MountainCar-v0", render_mode=render_mode)
+        else:
+            self.env = gym.make("MountainCar-v0")
+
+    def reset(self):
+        return self.env.reset()
+
+    def step(self, action):
+        return self.env.step(action)
 
 
 class PendulumEnvironment(Envionment):

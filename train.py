@@ -1,18 +1,19 @@
 from agent_trainer import AgentTrainer
 from agent import DQNAgent
 from environment import CartPoleEnvironment
+from environment import MountainCarEnvironment
 from logger import Logger
 from power_replay import PowerReplay
 import torch
 
-device = "cuda"
+device = "cpu"
 
 agent = DQNAgent(2, 4, device=device)
 env = CartPoleEnvironment()
-render_env = CartPoleEnvironment("human")
-logger = Logger("cartpole-uniform-uf5")
+render_env = CartPoleEnvironment("")
+logger = Logger("CartPole-t8")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
-powerReplay = PowerReplay(5e3, 32, 1, [], "uniform")
+powerReplay = PowerReplay(10000, 64, 1, [], "uniform")
 
 trainer = AgentTrainer(
     agent,
@@ -29,4 +30,4 @@ trainer = AgentTrainer(
 )
 
 # pdb.set_trace()
-trainer.train_steps(1e5)
+trainer.train_steps(1e6)
