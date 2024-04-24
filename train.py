@@ -11,7 +11,7 @@ device = "cpu"
 agent = DQNAgent(2, 4, device=device)
 env = CartPoleEnvironment()
 render_env = CartPoleEnvironment("")
-logger = Logger("CartPole-t8")
+logger = Logger("CartPole-t9")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
 powerReplay = PowerReplay(10000, 64, 1, [], "uniform")
 

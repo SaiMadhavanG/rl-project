@@ -63,14 +63,15 @@ class AgentTrainer:
         currentStateBatch = self.get_states_tensor(train_batch)
         nextStateBatch = self.get_next_states_tensor(train_batch)
         actionsBatch = self.get_actions_tensor(train_batch)
-        batchSize = self.power_replay.batch_size
+        batchSize = len(train_batch)
         
         # predict q estimate for next_states using targetNetwork
         self.agent.targetNetwork.eval()
         q_next_states = self.agent.targetNetwork(nextStateBatch.to(self.device))
         
+        
         # calculate the target q_values for the network
-        targets = torch.zeros(self.power_replay.batch_size).to(self.device)
+        targets = torch.zeros(batchSize).to(self.device)
         for idx, transition in enumerate(train_batch):
             if transition.terminated: 
                 y = transition.reward
@@ -101,7 +102,7 @@ class AgentTrainer:
         score = 0
         done = False
         state = currentState
-        chunk = Chunk(_size = 1, _episode_id = eps_id, _transitions = [])    # make the chunk size available here
+        chunk = Chunk(_size = self.power_replay.chunk_size, _episode_id = eps_id, _transitions = [])    # make the chunk size available here
         
         while not done:
             # select and run the action
