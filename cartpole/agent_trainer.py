@@ -75,7 +75,7 @@ class AgentTrainer:
                 # Calculate target Q-value using target network
                 y = transition.reward + self.gamma * torch.max(Q_S_)
             QS = self.agent.network(torch.tensor(transition.state).to(self.device))
-            return (y - QS[transition.action].item()) ** 2
+            return float((y - QS[transition.action].item()) ** 2)
 
     def train_episode(self):
         """
@@ -89,7 +89,11 @@ class AgentTrainer:
 
         while not done:
             # TODO handle addition for larger chunks
-
+            self.logger.log(
+                "times_sampled",
+                self.power_replay.buffer.chunks[0].timesSampled,
+                self._steps_done,
+            )
             action = self.agent.selectAction(
                 state, epsilon=self.epsilon, network="current"
             )
@@ -103,7 +107,7 @@ class AgentTrainer:
 
             score += reward  # update score
 
-            self.power_replay.sweep()
+            self.power_replay.sweep(self.tracker)
 
             train_batch, train_chunks = self.power_replay.getBatch()
             currentStateBatch = self.get_states_tensor(train_batch)
@@ -198,15 +202,20 @@ class AgentTrainer:
             self.episode_id += 1
 
     def fill_buffer(self):
+        done = True
         while not self.power_replay.samplable():
-            state, _ = self.env.reset()
-            done = False
-            while not done:
-                action = self.agent.selectAction(state, epsilon=1)
-                next_state, reward, done, _, _ = self.env.step(action)
-                transition = Transition(state, action, reward, next_state, done)
-                self.power_replay.addTransitions([transition], self.episode_id)
-                state = next_state
+            if done:
+                state, _ = self.env.reset()
+                done = False
+            action = self.agent.selectAction(state, epsilon=1)
+            next_state, reward, done, _, _ = self.env.step(action)
+            transition = Transition(state, action, reward, next_state, done)
+            tde_ = self.calculate_tde(transition)
+            transition.setTDE(tde_)
+            self.power_replay.addTransitions([transition], self.episode_id)
+            self.tracker.set_tde(self.power_replay.buffer.chunks[-1])
+            state = next_state
+        self.power_replay.sweep(self.tracker)
 
     def save(self):
         """

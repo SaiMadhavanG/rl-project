@@ -12,4 +12,6 @@ class Sampler:
         probs = buffer.getProbabilities()
         choices = random.choices(range(buffer.size), weights=probs, k=self.batch_size)
         batch = [buffer.chunks[i] for i in choices]
+        for i in choices:
+            buffer.chunks[i].timesSampled += 1
         return batch

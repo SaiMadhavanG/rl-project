@@ -2,6 +2,7 @@ from sampler import Sampler
 from transition_chunk import Chunk
 from weight_assigner import Weight_assigner, UniformAssigner
 from replay_buffer import ReplayBuffer
+from tracker import Tracker
 
 
 class PowerReplay:
@@ -20,6 +21,7 @@ class PowerReplay:
         self.batch_size = batch_size
         self.sampler = Sampler(batch_size)
         self.chunk_size = chunk_size
+        self.chunk_counter = 0
 
     def samplable(self):
         return len(self.buffer.chunks) >= self.size
@@ -32,16 +34,22 @@ class PowerReplay:
         return transitions, chunks
 
     def addTransitions(self, transitions, episode_id):
+        # TODO handle chunk id for when more transitions
         while len(transitions) > self.chunk_size:
-            chunk = Chunk(
-                self.chunk_size, episode_id, _transitions=transitions[: self.chunk_size]
-            )
-            self.buffer.addChunk(chunk)
-            for i in range(self.chunk_size):
-                transitions.pop(0)
-        chunk = Chunk(self.chunk_size, episode_id, _transitions=transitions)
+            raise Exception("Given transitions more than chunk size")
+            # chunk = Chunk(
+            #     self.chunk_size, episode_id, _transitions=transitions[: self.chunk_size]
+            # )
+            # self.buffer.addChunk(chunk)
+            # for i in range(self.chunk_size):
+            #     transitions.pop(0)
+        chunk = Chunk(
+            self.chunk_size, self.chunk_counter, episode_id, _transitions=transitions
+        )
         self.buffer.addChunk(chunk)
+        self.chunk_counter += 1
 
-    def sweep(self):
-        self.weight_assigner.set_weights()
-        self.weight_assigner.set_probablities()
+    def sweep(self, tracker: Tracker):
+        chunk_ids = tracker.modified
+        self.weight_assigner.set_weights(chunk_ids)
+        tracker.modified = []

@@ -7,6 +7,7 @@ class Tracker:
 
     def __init__(self, replay_buffer: ReplayBuffer):
         self.replay_buffer = replay_buffer
+        self.modified = []
 
     """
         Single chunk based assigner methods
@@ -19,6 +20,7 @@ class Tracker:
         for transition in chunk.transitions:
             tde.append(transition.tde)
         chunk.set_tde(sum(tde) / len(tde))
+        self.modified.append(chunk)
 
     def set_estimated_return(self, chunk: Chunk, estimated_return):
         chunk.set_rewards(estimated_return)

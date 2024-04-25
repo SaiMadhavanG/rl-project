@@ -68,48 +68,44 @@ class Weight_assigner:
         )
 
     # Assigns the weight to every chunk in the replay buffer
-    def set_weights(self):
-        trace_multiplier = self.trace_factor
-        replay_size = len(self.replay_buffer.chunks)
+    def set_weights(self, chunks):
+        # trace_multiplier = self.trace_factor
+        # replay_size = len(self.replay_buffer.chunks)
 
-        # The latest chunk wont have any trace
-        current_chunk = self.replay_buffer.chunks[-1]
-        current_chunk.set_weight(self.without_trace_weight(current_chunk))
+        # # The latest chunk wont have any trace
+        # current_chunk = self.replay_buffer.chunks[-1]
+        # current_chunk.set_weight(self.without_trace_weight(current_chunk))
 
-        for i in range(-1, -replay_size, -1):
-            current_chunk = self.replay_buffer.chunks[i]
-            previous_chunk = self.replay_buffer.chunks[i - 1]
+        # for i in range(-1, -replay_size, -1):
+        #     current_chunk = self.replay_buffer.chunks[i]
+        #     previous_chunk = self.replay_buffer.chunks[i - 1]
 
-            previous_chunk_without_trace_weight = self.without_trace_weight(
-                previous_chunk
-            )
+        #     previous_chunk_without_trace_weight = self.without_trace_weight(
+        #         previous_chunk
+        #     )
 
-            if previous_chunk.episode_id == current_chunk.episode_id:
-                previous_chunk.set_weight(
-                    previous_chunk_without_trace_weight
-                    + self.trace_func(trace_multiplier * current_chunk.weight)
-                )
-            else:
-                previous_chunk.set_weight(previous_chunk_without_trace_weight)
+        #     if previous_chunk.episode_id == current_chunk.episode_id:
+        #         previous_chunk.set_weight(
+        #             previous_chunk_without_trace_weight
+        #             + self.trace_func(trace_multiplier * current_chunk.weight)
+        #         )
+        #     else:
+        #         previous_chunk.set_weight(previous_chunk_without_trace_weight)
+        init_id = self.replay_buffer.chunks[0].chunk_id
+        for chunk in chunks:
+            weight = self.without_trace_weight(chunk)
+            chunk.set_weight(weight)
+            idx = chunk.chunk_id - init_id
+            if idx >= 0:
+                self.replay_buffer.weights[idx] = weight
 
     # Method to sweep the replay buffer and assign the probablity to each chunk
     # probablity = chunk weight/ summation of weight of each chunk present in the replay buffer
-    def set_probablities(self):
-        totalWeight = 0
-        for chunk in self.replay_buffer.chunks:
-            totalWeight += chunk.weight
-        for chunk in self.replay_buffer.chunks:
-            chunk.set_probablity(chunk.weight / totalWeight)
 
 
 class UniformAssigner:
     def __init__(self, _replay_buffer: ReplayBuffer):
         self.replay_buffer = _replay_buffer
 
-    def set_weights(self):
+    def set_weights(self, *args):
         pass
-
-    def set_probablities(self):
-        totalWeight = len(self.replay_buffer.chunks)
-        for chunk in self.replay_buffer.chunks:
-            chunk.set_probablity(1 / totalWeight)

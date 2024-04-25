@@ -6,6 +6,7 @@ class Chunk:
     def __init__(
         self,
         _size,
+        _chunk_id,
         _episode_id=None,
         _weight=0,
         _tde=0,
@@ -19,6 +20,7 @@ class Chunk:
         _frequency_ratio_global=0,
     ):
         self.size = _size
+        self.chunk_id = _chunk_id
         self.transitions = _transitions
         self.episode_id = _episode_id
         self.weight = _weight
@@ -30,6 +32,7 @@ class Chunk:
         self.probablity = _probablity
         self.frequency_ration_current = _frequency_ratio_current
         self.frequency_ration_global = _frequency_ratio_global
+        self.timesSampled = 0
 
     # SETTERS FOR ALL ATTRIBUTES
     def set_episode_id(self, _episode_id):
