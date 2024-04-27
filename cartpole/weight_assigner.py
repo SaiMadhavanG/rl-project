@@ -31,7 +31,7 @@ class Weight_assigner:
 
     # Function for each factor  : currently simplistic
     def tde_func(self, tde):
-        return self.tde_factor * tde
+        return tde**self.tde_factor
 
     def reward_func(self, reward):
         return self.reward_factor * reward

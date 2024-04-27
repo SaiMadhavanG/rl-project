@@ -13,7 +13,9 @@ class PowerReplay:
         if mode == "uniform":
             self.weight_assigner = UniformAssigner(self.buffer)
         elif mode == "tde":
-            self.weight_assigner = Weight_assigner(self.buffer, _tde_factor=1)
+            self.weight_assigner = Weight_assigner(
+                self.buffer, _tde_factor=weight_factors["tde_alpha"]
+            )
         else:
             raise Exception("Implementation pending")
         # TODO initialize weight Assigner using
