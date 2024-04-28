@@ -50,3 +50,27 @@ class PendulumEnvironment(Envionment):
 
     def step(self, action):
         return self.env.step(action)
+
+
+class AcrobotEnvironment(Envionment):
+    def __init__(self, render_mode="") -> None:
+        super().__init__()
+        if render_mode:
+            self.env = gym.make("Acrobot-v1", render_mode=render_mode)
+        else:
+            self.env = gym.make("Acrobot-v1")
+
+    def reset(self):
+        self.steps = 0
+        return self.env.reset()
+
+    def step(self, action):
+        state, reward, done, a, b = self.env.step(action)
+        self.steps += 1
+        if done:
+            reward = 1000
+            print(f"steps taken for this episode : {self.steps}")
+        elif self.steps > 1100:
+            print("steps overshoot happened ooooooooooooooooooooooo")
+            done = True
+        return (state, reward, done, a, b)

@@ -37,7 +37,7 @@ class Weight_assigner:
         return reward**self.reward_factor
 
     def estimated_return_func(self, estimated_return):
-        return estimated_return**self.estimated_return_factor 
+        return estimated_return**self.estimated_return_factor
 
     def fr_ratio_current_func(self, fr_ratio_current):
         return (
@@ -95,6 +95,7 @@ class Weight_assigner:
         for chunk in chunks:
             weight = self.without_trace_weight(chunk)
             chunk.set_weight(weight)
+            print(f"this is the weight of the chunk : {chunk.weight}")
             idx = chunk.chunk_id - init_id
             if idx >= 0:
                 self.replay_buffer.weights[idx] = weight

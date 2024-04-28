@@ -112,14 +112,18 @@ class AgentTrainer:
             )
             next_state, reward, done, _, _ = self.env.step(action)
             transition = Transition(state, action, reward, next_state, done)
+
             tde_ = self.calculate_tde(transition)
             estimared_return_ = self.calculate_estimated_return(transition)
+
             transition.setTDE(tde_)
             transition.setEstimatedReturn(estimared_return_)
+
             self.power_replay.addTransitions([transition], self.episode_id)
             self.tracker.set_tde(self.power_replay.buffer.chunks[-1])
-            # set the average reward for the chunk
             self.tracker.set_rewards(self.power_replay.buffer.chunks[-1])
+            self.tracker.set_estimated_return(
+                self.power_replay.buffer.chunks[-1])
             state = next_state
 
             score += reward  # update score
@@ -227,10 +231,19 @@ class AgentTrainer:
             action = self.agent.selectAction(state, epsilon=1)
             next_state, reward, done, _, _ = self.env.step(action)
             transition = Transition(state, action, reward, next_state, done)
+
             tde_ = self.calculate_tde(transition)
+            estimared_return_ = self.calculate_estimated_return(transition)
+
             transition.setTDE(tde_)
+            transition.setEstimatedReturn(estimared_return_)
+
             self.power_replay.addTransitions([transition], self.episode_id)
             self.tracker.set_tde(self.power_replay.buffer.chunks[-1])
+            self.tracker.set_rewards(self.power_replay.buffer.chunks[-1])
+            self.tracker.set_estimated_return(
+                self.power_replay.buffer.chunks[-1])
+
             state = next_state
         self.power_replay.sweep(self.tracker)
 

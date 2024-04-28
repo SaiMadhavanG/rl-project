@@ -8,7 +8,8 @@ class Chunk:
         _size,
         _chunk_id,
         _episode_id=None,
-        _weight=0,
+        # this was set to allow the uniform mode. As previously total_weight = 0 was causing division errors.
+        _weight=1,
         _tde=0,
         _rewards=0,
         _estimated_return=0,
