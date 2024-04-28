@@ -6,6 +6,7 @@ class Transition:
         self.nextState = nextState
         self.terminated = terminated
         self.tde = 0
+        self.estimated_return = 0
 
     def getState(self):
         return self.state
@@ -21,3 +22,6 @@ class Transition:
 
     def setTDE(self, tde):
         self.tde = tde
+
+    def setEstimatedReturn(self, estimated_return):
+        self.estimated_return = estimated_return

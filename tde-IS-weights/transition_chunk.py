@@ -8,7 +8,7 @@ class Chunk:
         _size,
         _chunk_id,
         _episode_id=None,
-        _weight=0,
+        _weight=1,
         _tde=0,
         _rewards=0,
         _estimated_return=0,

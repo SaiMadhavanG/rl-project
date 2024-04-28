@@ -22,11 +22,17 @@ class Tracker:
         chunk.set_tde(sum(tde) / len(tde))
         self.modified.append(chunk)
 
-    def set_estimated_return(self, chunk: Chunk, estimated_return):
-        chunk.set_rewards(estimated_return)
+    def set_estimated_return(self, chunk: Chunk):
+        estimated_returns = []
+        for transition in chunk.transitions:
+            estimated_returns.append(transition.estimated_return)
+        chunk.set_estimated_return(sum(estimated_returns) / len(estimated_returns))
 
-    def set_rewards(self, chunk: Chunk, rewards):
-        chunk.set_rewards(rewards)
+    def set_rewards(self, chunk: Chunk):
+        rewards = []
+        for transition in chunk.transitions:
+            rewards.append(transition.reward)
+        chunk.set_rewards(sum(rewards) / len(rewards))
 
     def set_lastSampled(self, chunk: Chunk, lastSampled):
         chunk.set_lastSampled(lastSampled)

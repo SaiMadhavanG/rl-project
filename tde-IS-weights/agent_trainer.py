@@ -61,7 +61,7 @@ class AgentTrainer:
         pred_vals = y_pred[torch.arange(s1), self.actionsHistory]
         true_vals = y_true[torch.arange(s1), self.actionsHistory]
         loss = torch.dot((pred_vals - true_vals) ** 2, IS_weights.to(self.device))
-        
+
         # loss = F.mse_loss(
         #     y_pred[torch.arange(s1), self.actionsHistory],
         #     y_true[torch.arange(s1), self.actionsHistory],
@@ -80,6 +80,18 @@ class AgentTrainer:
                 y = transition.reward + self.gamma * torch.max(Q_S_)
             QS = self.agent.network(torch.tensor(transition.state).to(self.device))
             return float((y - QS[transition.action].item()) ** 2)
+
+    def calculate_estimated_return(self, transition):
+        with torch.no_grad():
+            Q_S_ = self.agent.targetNetwork(
+                torch.tensor(transition.nextState).to(self.device)
+            )
+            if transition.terminated:
+                y = transition.reward
+            else:
+                # Calculate target Q-value using target network
+                y = transition.reward + self.gamma * torch.max(Q_S_)
+            return float(y)
 
     def train_episode(self):
         """
@@ -104,16 +116,21 @@ class AgentTrainer:
             next_state, reward, done, _, _ = self.env.step(action)
             transition = Transition(state, action, reward, next_state, done)
             tde_ = self.calculate_tde(transition)
+            estimared_return_ = self.calculate_estimated_return(transition)
             transition.setTDE(tde_)
+            transition.setEstimatedReturn(estimared_return_)
             self.power_replay.addTransitions([transition], self.episode_id)
             self.tracker.set_tde(self.power_replay.buffer.chunks[-1])
+            self.tracker.set_rewards(self.power_replay.buffer.chunks[-1])
             state = next_state
 
             score += reward  # update score
 
             self.power_replay.sweep(self.tracker)
 
-            train_batch, train_chunks, IS_weights = self.power_replay.getBatch(b=(1 - self.epsilon))
+            train_batch, train_chunks, IS_weights = self.power_replay.getBatch(
+                b=(1 - self.epsilon)
+            )
             currentStateBatch = self.get_states_tensor(train_batch)
             nextStateBatch = self.get_next_states_tensor(train_batch)
 

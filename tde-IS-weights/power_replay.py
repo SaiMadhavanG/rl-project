@@ -17,6 +17,22 @@ class PowerReplay:
             self.weight_assigner = Weight_assigner(
                 self.buffer, _tde_factor=weight_factors["tde_alpha"]
             )
+        elif mode == "rewards":
+            self.weight_assigner = Weight_assigner(
+                self.buffer, _reward_factor=weight_factors["rewards_alpha"]
+            )
+        elif mode == "returns":
+            self.weight_assigner = Weight_assigner(
+                self.buffer,
+                _estimated_return_factor=weight_factors["estimatedReturn_alpha"],
+            )
+        elif mode == "combination":
+            self.weight_assigner = Weight_assigner(
+                self.buffer,
+                _tde_factor=weight_factors["tde_alpha"],
+                _reward_factor=weight_factors["rewards_alpha"],
+                _estimated_return_factor=weight_factors["estimatedReturn_alpha"],
+            )
         else:
             raise Exception("Implementation pending")
         # TODO initialize weight Assigner using
@@ -31,7 +47,9 @@ class PowerReplay:
 
     def getBatch(self, b=0):
         chunks, chunk_IS_weights = self.sampler.sample(self.buffer, b=b)
-        transition_IS_weights = torch.repeat_interleave(torch.tensor(chunk_IS_weights, dtype=torch.float), self.chunk_size)
+        transition_IS_weights = torch.repeat_interleave(
+            torch.tensor(chunk_IS_weights, dtype=torch.float), self.chunk_size
+        )
         transitions = []
         for chunk in chunks:
             transitions.extend(chunk.transitions)
