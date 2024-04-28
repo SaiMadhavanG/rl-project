@@ -16,11 +16,15 @@ render_env = CartPoleEnvironment("human")
 
 # logger = Logger(
 #     "Ricky-acrobot-uniform-outside-epsilons-07-009-4e4-factors-0-0-0")
-logger = Logger(
-    "bug_testing")
+logger = Logger("cartpole-returns")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
-powerReplay = PowerReplay(5e3, 32, 1, {
-                          "tde_alpha": 0.6, "rewards_alpha": 0.6, "estimatedReturn_alpha": 0.6}, "tde")
+powerReplay = PowerReplay(
+    5e3,
+    32,
+    1,
+    {"tde_alpha": 0.6, "rewards_alpha": 0.6, "estimatedReturn_alpha": 0.6},
+    "tde",
+)
 
 trainer = AgentTrainer(
     agent,

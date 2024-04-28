@@ -3,6 +3,8 @@
 from replay_buffer import ReplayBuffer
 from transition_chunk import Chunk
 
+import numpy as np
+
 
 class Weight_assigner:
 
@@ -34,10 +36,10 @@ class Weight_assigner:
         return tde**self.tde_factor
 
     def reward_func(self, reward):
-        return reward**self.reward_factor
+        return np.abs(reward**self.reward_factor)
 
     def estimated_return_func(self, estimated_return):
-        return estimated_return**self.estimated_return_factor
+        return np.abs(estimated_return**self.estimated_return_factor)
 
     def fr_ratio_current_func(self, fr_ratio_current):
         return (
