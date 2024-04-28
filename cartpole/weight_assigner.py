@@ -37,7 +37,7 @@ class Weight_assigner:
         return reward**self.reward_factor
 
     def estimated_return_func(self, estimated_return):
-        return self.estimated_return_factor * estimated_return
+        return estimated_return**self.estimated_return_factor 
 
     def fr_ratio_current_func(self, fr_ratio_current):
         return (

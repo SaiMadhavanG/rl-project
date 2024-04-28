@@ -12,7 +12,8 @@ env = CartPoleEnvironment()
 render_env = CartPoleEnvironment("human")
 logger = Logger("Ricky-cartpole-tde-reward-06-06")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
-powerReplay = PowerReplay(5e3, 32, 1, {"tde_alpha": 0.6, "rewards_alpha": 0.6}, "tde")
+powerReplay = PowerReplay(5e3, 32, 1, {
+                          "tde_alpha": 0.6, "rewards_alpha": 0.6, "estimatedReturn_alpha": 0.6}, "tde")
 
 trainer = AgentTrainer(
     agent,

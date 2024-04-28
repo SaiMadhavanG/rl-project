@@ -28,10 +28,14 @@ class Tracker:
             rewards.append(transition.reward)
         chunk.set_rewards(sum(rewards)/ len(rewards))
         # not added to modified because already being added in modified list set_tde
+        
+    def set_estimated_return(self, chunk: Chunk):
+        estimated_returns = []
+        for transition in chunk.transitions:
+            estimated_returns.append(transition.estimated_return)
+        chunk.set_estimated_return(sum(estimated_returns)/ len(estimated_returns))
+        # not added to modified because already being added in modified list set_tde
     
-
-    def set_estimated_return(self, chunk: Chunk, estimated_return):
-        chunk.set_rewards(estimated_return)
 
     def set_lastSampled(self, chunk: Chunk, lastSampled):
         chunk.set_lastSampled(lastSampled)
