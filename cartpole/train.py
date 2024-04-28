@@ -22,8 +22,8 @@ powerReplay = PowerReplay(
     5e3,
     32,
     1,
-    {"tde_alpha": 0.6, "rewards_alpha": 0.6, "estimatedReturn_alpha": 0.6},
-    "tde",
+    {"estimatedReturn_alpha": 1},
+    "returns",
 )
 
 trainer = AgentTrainer(
@@ -33,12 +33,12 @@ trainer = AgentTrainer(
     optimizer,
     powerReplay,
     device=device,
-    epsilon=0.7,
-    min_epsilon=0.09,
-    epsilon_decay=4e-4,
+    epsilon=0.5,
+    min_epsilon=0.1,
+    epsilon_decay=5e-4,
     gamma=1,
-    update_frequency=4,
+    update_frequency=5,
 )
 
 # pdb.set_trace()
-trainer.train_steps(2e5)
+trainer.train_steps(1e5)

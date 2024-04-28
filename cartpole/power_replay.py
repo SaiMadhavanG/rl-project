@@ -14,7 +14,19 @@ class PowerReplay:
             self.weight_assigner = UniformAssigner(self.buffer)
         elif mode == "tde":
             self.weight_assigner = Weight_assigner(
-                self.buffer, _tde_factor=weight_factors["tde_alpha"], _reward_factor=weight_factors["rewards_alpha"], _estimated_return_factor = weight_factors["estimatedReturn_alpha"]
+                self.buffer, _tde_factor=weight_factors["tde_alpha"]
+            )
+        elif mode == "returns":
+            self.weight_assigner = Weight_assigner(
+                self.buffer,
+                _estimated_return_factor=weight_factors["estimatedReturn_alpha"],
+            )
+        elif mode == "combination":
+            self.weight_assigner = Weight_assigner(
+                self.buffer,
+                _tde_factor=weight_factors["tde_alpha"],
+                _reward_factor=weight_factors["rewards_alpha"],
+                _estimated_return_factor=weight_factors["estimatedReturn_alpha"],
             )
         else:
             raise Exception("Implementation pending")

@@ -97,7 +97,6 @@ class Weight_assigner:
         for chunk in chunks:
             weight = self.without_trace_weight(chunk)
             chunk.set_weight(weight)
-            print(f"this is the weight of the chunk : {chunk.weight}")
             idx = chunk.chunk_id - init_id
             if idx >= 0:
                 self.replay_buffer.weights[idx] = weight
