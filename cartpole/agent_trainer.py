@@ -103,6 +103,7 @@ class AgentTrainer:
             transition.setTDE(tde_)
             self.power_replay.addTransitions([transition], self.episode_id)
             self.tracker.set_tde(self.power_replay.buffer.chunks[-1])
+            self.tracker.set_rewards(self.power_replay.buffer.chunks[-1])   # set the average reward for the chunk
             state = next_state
 
             score += reward  # update score

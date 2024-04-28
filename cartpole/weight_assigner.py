@@ -34,7 +34,7 @@ class Weight_assigner:
         return tde**self.tde_factor
 
     def reward_func(self, reward):
-        return self.reward_factor * reward
+        return reward**self.reward_factor
 
     def estimated_return_func(self, estimated_return):
         return self.estimated_return_factor * estimated_return

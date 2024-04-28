@@ -5,14 +5,14 @@ from logger import Logger
 from power_replay import PowerReplay
 import torch
 
-device = "cuda"
+device = "cpu"
 
 agent = DQNAgent(2, 4, device=device)
 env = CartPoleEnvironment()
 render_env = CartPoleEnvironment("human")
-logger = Logger("cartpole-tde-alpha")
+logger = Logger("Ricky-cartpole-tde-reward-06-06")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
-powerReplay = PowerReplay(5e3, 32, 1, {"tde_alpha": 0.6}, "tde")
+powerReplay = PowerReplay(5e3, 32, 1, {"tde_alpha": 0.6, "rewards_alpha": 0.6}, "tde")
 
 trainer = AgentTrainer(
     agent,
