@@ -25,7 +25,11 @@ class Tracker:
     def set_estimated_return(self, chunk: Chunk, estimated_return):
         chunk.set_rewards(estimated_return)
 
-    def set_rewards(self, chunk: Chunk, rewards):
+    def set_rewards(self, chunk: Chunk):
+        rewards = 0
+        for transition in chunk.transitions:
+            rewards += transition.reward
+        rewards = rewards / len(chunk.transitions)
         chunk.set_rewards(rewards)
 
     def set_lastSampled(self, chunk: Chunk, lastSampled):
