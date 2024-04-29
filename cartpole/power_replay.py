@@ -16,6 +16,10 @@ class PowerReplay:
             self.weight_assigner = Weight_assigner(
                 self.buffer, _tde_factor=weight_factors["tde_alpha"]
             )
+        elif mode == "rewards":
+            self.weight_assigner = Weight_assigner(
+                self.buffer, _reward_factor=weight_factors["rewards_factor"]
+            )
         else:
             raise Exception("Implementation pending")
         # TODO initialize weight Assigner using

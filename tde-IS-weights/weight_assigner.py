@@ -2,6 +2,7 @@
 # Will set the probablity and weight attributes of chunks
 from replay_buffer import ReplayBuffer
 from transition_chunk import Chunk
+import numpy as np
 
 
 class Weight_assigner:
@@ -34,10 +35,10 @@ class Weight_assigner:
         return tde**self.tde_factor
 
     def reward_func(self, reward):
-        return self.reward_factor * reward
+        return np.abs(reward**self.reward_factor)
 
     def estimated_return_func(self, estimated_return):
-        return self.estimated_return_factor * estimated_return
+        return np.abs(estimated_return**self.estimated_return_factor)
 
     def fr_ratio_current_func(self, fr_ratio_current):
         return (
