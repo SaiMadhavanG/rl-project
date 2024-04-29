@@ -10,9 +10,9 @@ device = "cuda"
 agent = DQNAgent(2, 4, device=device)
 env = CartPoleEnvironment()
 render_env = CartPoleEnvironment("human")
-logger = Logger("cartpole-returns-is-2")
+logger = Logger("cartpole-rewards-is-2")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=5e-4)
-powerReplay = PowerReplay(5e3, 32, 1, {"estimatedReturn_alpha": 1}, "returns")
+powerReplay = PowerReplay(5e3, 32, 1, {"rewards_alpha": 1}, "rewards")
 
 trainer = AgentTrainer(
     agent,
