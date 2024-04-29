@@ -10,7 +10,7 @@ import numpy as np
 class PowerReplay:
     def __init__(self, size, batch_size, chunk_size, weight_factors, mode) -> None:
         # TODO move buffer initialization in here
-        self.size = size
+        self.size = int(size)
         self.buffer = ReplayBuffer(size)
         if mode == "uniform":
             self.weight_assigner = UniformAssigner(self.buffer)
