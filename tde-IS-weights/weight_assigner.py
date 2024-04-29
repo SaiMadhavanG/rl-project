@@ -50,9 +50,10 @@ class Weight_assigner:
             self.fr_ratio_global_factor * fr_ratio_global
         )  # TODO : should be inversely. So update this function
 
-    def lastSampled_func(self, lastSampled):
-        staleness = self.iteration_num - lastSampled
-        return self.staleness_factor * staleness
+    def staleness_func(self, lastSampled, chunk_counter):
+        staleness = chunk_counter - lastSampled
+        normalized_staleness = staleness / staleness.max()
+        return self.staleness_factor * normalized_staleness
 
     def trace_func(self, trace_weight):
         return self.trace_factor * trace_weight
@@ -65,11 +66,10 @@ class Weight_assigner:
             + self.estimated_return_func(chunk.estimated_return)
             + self.fr_ratio_current_func(chunk.frequency_ration_current)
             + self.fr_ratio_global_func(chunk.frequency_ration_global)
-            + self.lastSampled_func(chunk.lastSampled)
         )
 
     # Assigns the weight to every chunk in the replay buffer
-    def set_weights(self, chunks):
+    def set_weights(self, chunks, lastSampled, chunk_counter):
         # trace_multiplier = self.trace_factor
         # replay_size = len(self.replay_buffer.chunks)
 
@@ -99,6 +99,9 @@ class Weight_assigner:
             idx = chunk.chunk_id - init_id
             if idx >= 0:
                 self.replay_buffer.weights[idx] = weight
+
+        normalized_staleness = self.staleness_func(lastSampled, chunk_counter)
+        self.replay_buffer.weights += normalized_staleness
 
     # Method to sweep the replay buffer and assign the probablity to each chunk
     # probablity = chunk weight/ summation of weight of each chunk present in the replay buffer

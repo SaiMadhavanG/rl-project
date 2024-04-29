@@ -4,6 +4,7 @@ from weight_assigner import Weight_assigner, UniformAssigner
 from replay_buffer import ReplayBuffer
 from tracker import Tracker
 import torch
+import numpy as np
 
 
 class PowerReplay:
@@ -26,12 +27,17 @@ class PowerReplay:
                 self.buffer,
                 _estimated_return_factor=weight_factors["estimatedReturn_alpha"],
             )
+        elif mode == "staleness":
+            self.weight_assigner = Weight_assigner(
+                self.buffer, _staleness_factor=weight_factors["staleness_alpha"]
+            )
         elif mode == "combination":
             self.weight_assigner = Weight_assigner(
                 self.buffer,
                 _tde_factor=weight_factors["tde_alpha"],
                 _reward_factor=weight_factors["rewards_alpha"],
                 _estimated_return_factor=weight_factors["estimatedReturn_alpha"],
+                _staleness_factor=weight_factors["staleness_alpha"],
             )
         else:
             raise Exception("Implementation pending")
@@ -41,6 +47,7 @@ class PowerReplay:
         self.sampler = Sampler(batch_size)
         self.chunk_size = chunk_size
         self.chunk_counter = 0
+        self.lastSampled = np.zeros(self.size, dtype=int)
 
     def samplable(self):
         return len(self.buffer.chunks) >= self.size
@@ -51,8 +58,11 @@ class PowerReplay:
             torch.tensor(chunk_IS_weights, dtype=torch.float), self.chunk_size
         )
         transitions = []
+        init_id = self.buffer.chunks[0].chunk_id
         for chunk in chunks:
             transitions.extend(chunk.transitions)
+            idx = chunk.chunk_id - init_id
+            self.lastSampled[idx] = self.chunk_counter
         return transitions, chunks, transition_IS_weights
 
     def addTransitions(self, transitions, episode_id):
@@ -69,9 +79,13 @@ class PowerReplay:
             self.chunk_size, self.chunk_counter, episode_id, _transitions=transitions
         )
         self.buffer.addChunk(chunk)
+        self.lastSampled[:-1] = self.lastSampled[1:]
+        self.lastSampled[-1] = int(self.lastSampled.mean())
         self.chunk_counter += 1
 
     def sweep(self, tracker: Tracker):
         chunk_ids = tracker.modified
-        self.weight_assigner.set_weights(chunk_ids)
+        self.weight_assigner.set_weights(
+            chunk_ids, self.lastSampled, self.chunk_counter - 1
+        )
         tracker.modified = []
