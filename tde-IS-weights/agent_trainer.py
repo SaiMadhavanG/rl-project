@@ -60,8 +60,7 @@ class AgentTrainer:
         s1, s2 = y_true.shape
         pred_vals = y_pred[torch.arange(s1), self.actionsHistory]
         true_vals = y_true[torch.arange(s1), self.actionsHistory]
-        loss = torch.dot((pred_vals - true_vals) ** 2, IS_weights.to(self.device))
-
+        loss = torch.dot(((pred_vals - true_vals) ** 2 / s1), IS_weights.to(self.device))
         # loss = F.mse_loss(
         #     y_pred[torch.arange(s1), self.actionsHistory],
         #     y_true[torch.arange(s1), self.actionsHistory],
