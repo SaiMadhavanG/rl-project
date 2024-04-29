@@ -16,7 +16,7 @@ class Weight_assigner:
         _estimated_return_factor=0,
         _fr_ratio_current_factor=0,
         _fr_ratio_global_factor=0,
-        _trace_factor=0,
+        _trace_factor=0.1,
         _staleness_factor=0,
     ):
 
@@ -69,7 +69,7 @@ class Weight_assigner:
         )
 
     # Assigns the weight to every chunk in the replay buffer
-    def set_weights(self, chunks):
+    def set_weights(self, chunks, doTrace = True):     # added this because trace takes more time and so user may decide not to do it
         # trace_multiplier = self.trace_factor
         # replay_size = len(self.replay_buffer.chunks)
 
@@ -99,9 +99,35 @@ class Weight_assigner:
             idx = chunk.chunk_id - init_id
             if idx >= 0:
                 self.replay_buffer.weights[idx] = weight
+                if doTrace: self.traceWeightsFrom(idx, self.trace_factor)
 
-    # Method to sweep the replay buffer and assign the probablity to each chunk
-    # probablity = chunk weight/ summation of weight of each chunk present in the replay buffer
+    
+    # will trace the weights of the chunk at this index to all the previous chunks of the same episode
+    def traceWeightsFrom(self, chunk_idx, trace_factor = 0.1):
+        chunk = self.replay_buffer.chunks[chunk_idx]
+        chunk_eps_id = chunk.episode_id
+        chunk_weight = chunk.weight
+        
+        i=0
+        trace = chunk_weight
+        while (chunk_idx-i >= 0):
+            prev_chunk = self.replay_buffer.chunks[chunk_idx - i]
+            prev_chunk_eps_id = prev_chunk.episode_id
+            
+            # the trace should be allowed to propagate in the same episode only
+            if (prev_chunk_eps_id != chunk_eps_id):
+                break
+            
+            else:
+                if (i==0) : 
+                    prev_chunk.weight += 0
+                    self.replay_buffer.weights[chunk_idx-i] += 0
+                else :
+                    trace *= trace_factor
+                    prev_chunk.weight += trace
+                    self.replay_buffer.weights[chunk_idx-i] += trace
+                i+=1
+
 
 
 class UniformAssigner:
