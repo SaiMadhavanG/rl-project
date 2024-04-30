@@ -37,7 +37,7 @@ class Weight_assigner:
 
     def exponentially_decaying_array(self):
         decaying_array = self.trace_factor ** np.arange(self.trace_length)
-        decaying_array[0] = 0   # for the first element the decay will be 0
+        decaying_array[0] = 0  # for the first element the decay will be 0
         # as the traces will be added in reversed order
         decaying_array = decaying_array[::-1]
         return decaying_array
@@ -67,6 +67,9 @@ class Weight_assigner:
         staleness = self.iteration_num - lastSampled
         return self.staleness_factor * staleness
 
+    def trace_func(self, trace_weight):
+        return self.trace_factor * trace_weight
+
     # calculates the weight without considering the trace got by the successor
     def without_trace_weight(self, chunk: Chunk):
         return (
@@ -75,12 +78,11 @@ class Weight_assigner:
             + self.estimated_return_func(chunk.estimated_return)
             + self.fr_ratio_current_func(chunk.frequency_ration_current)
             + self.fr_ratio_global_func(chunk.frequency_ration_global)
-            + self.lastSampled_func(chunk.lastSampled)
         )
 
     # Assigns the weight to every chunk in the replay buffer
     # added this because trace takes more time and so user may decide not to do it
-    def set_weights(self, chunks, doTrace=True):
+    def set_weights(self, chunks, lastSampled, chunk_counter, doTrace=True):
         # trace_multiplier = self.trace_factor
         # replay_size = len(self.replay_buffer.chunks)
 
@@ -122,18 +124,25 @@ class Weight_assigner:
         chunk_weight = self.replay_buffer.weights[chunk_idx]
 
         # decide if the whole trace_length can be covered for this index
-        available_trace_length = chunk_idx + 1     # because of 0 indexing of chunks
+        available_trace_length = chunk_idx + 1  # because of 0 indexing of chunks
 
         final_trace_length = self.trace_length
-        if (available_trace_length < self.trace_length):
+        if available_trace_length < self.trace_length:
             final_trace_length = available_trace_length
 
         trace_multipliers = self.trace_multiplier_array[-final_trace_length:]
 
         # prepare and add the traces
         traces = trace_multipliers * chunk_weight
-        self.replay_buffer.weights[chunk_idx + 1 -
-                                   final_trace_length: chunk_idx+1] += traces
+        self.replay_buffer.weights[
+            chunk_idx + 1 - final_trace_length : chunk_idx + 1
+        ] += traces
+
+        normalized_staleness = self.staleness_func(lastSampled, chunk_counter)
+        self.replay_buffer.weights += normalized_staleness
+
+    # Method to sweep the replay buffer and assign the probablity to each chunk
+    # probablity = chunk weight/ summation of weight of each chunk present in the replay buffer
 
 
 class UniformAssigner:
