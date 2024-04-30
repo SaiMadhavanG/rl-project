@@ -72,6 +72,13 @@ class Chunk:
     def add_transition(self, transition):
         self.transitions.append(transition)
 
+    def getAvgState(self):
+        res = 0
+        for transition in self.transitions:
+            res += transition.getState()
+        res /= self.size
+        return res
+
     # if number of transitions less than size then pad by duplicating the last transition
     # if number of transitions more than size then remove the extra transition from the front
     def pad_transitions(self):

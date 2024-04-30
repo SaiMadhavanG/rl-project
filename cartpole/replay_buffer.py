@@ -41,6 +41,9 @@ class FrequencyHistogram:
             else:
                 self.dicts[i][prevKey] = _values[i]
 
+    def keys(self):
+        return [list(d.keys()) for d in self.dicts]
+
     def addOne(self, _keys):
         res = self[_keys]
         newRes = [i + 1 for i in res]
@@ -63,14 +66,17 @@ class ReplayBuffer:
         n_dim=None,
         _frequency_hist_ranges=[],
         _frequency_mode="current",
+        _rarity=False,
+        _rarity_alpha=1,
     ) -> None:
         """
         n_dim is state vector size needed for making histogram
         _frequency_hist_range should be a tuple containing 3 values (start, end, step)
         """
         self.size = int(_size)
+        self._rarity=_rarity
         self.chunks = list(_chunks)
-
+        n_dim = len(_frequency_hist_ranges)
         self.frequency_histogram = (
             FrequencyHistogram(n_dim, _frequency_hist_ranges)
             if _frequency_hist_ranges
@@ -109,4 +115,11 @@ class ReplayBuffer:
             raise Exception("Frequency histogram not initialized")
 
     def getProbabilities(self):
+        if self._rarity:
+            probs = []
+            for chunk in self.chunks:
+                probs.append(self.frequency_histogram[chunk.getAvgState()])
+            probs_np = np.array(probs).sum(axis=1)
+            return (probs_np / probs_np.sum()) ** self._rarity_alpha
+
         return self.weights / self.weights.sum()

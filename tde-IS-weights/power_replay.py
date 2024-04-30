@@ -17,6 +17,25 @@ class PowerReplay:
             self.weight_assigner = Weight_assigner(
                 self.buffer, _tde_factor=weight_factors["tde_alpha"]
             )
+        elif mode == "returns":
+            self.weight_assigner = Weight_assigner(
+                self.buffer,
+                _estimated_return_factor=weight_factors["estimatedReturn_alpha"],
+            )
+        elif mode == "combination":
+            self.weight_assigner = Weight_assigner(
+                self.buffer,
+                _tde_factor=weight_factors["tde_alpha"],
+                _reward_factor=weight_factors["rewards_alpha"],
+                _estimated_return_factor=weight_factors["estimatedReturn_alpha"],
+            )
+        elif mode == "rarity":
+            self.buffer = ReplayBuffer(size, _frequency_hist_ranges=weight_factors["frequency_hist_ranges"])
+            self.buffer._rarity = True
+            self.buffer._rarity_alpha = weight_factors["rarity_alpha"]
+            self.weight_assigner = Weight_assigner(
+                self.buffer,
+            )
         else:
             raise Exception("Implementation pending")
         # TODO initialize weight Assigner using

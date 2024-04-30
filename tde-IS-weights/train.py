@@ -10,10 +10,14 @@ device = "cuda"
 agent = DQNAgent(4, 8, device=device)
 env = LunarLanderEnvironment()
 render_env = LunarLanderEnvironment("render")
-logger = Logger("Lunar_Lander_tde_IS_baseline", path="../cartpole/runs/")
+logger = Logger("Lunar_Lander_IS_returns_only", path="../cartpole/runs/")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
-powerReplay = PowerReplay(5e3, 32, 1, {"tde_alpha": 0.6}, "tde")
+powerReplay = PowerReplay(5e3, 32, 1, {
+                                        "rarity_alpha": 2, 
+                                        "frequency_hist_ranges": [(i, j, 100) for i, j in zip(env.env.observation_space.low.tolist(), env.env.observation_space.high.tolist())]
+                                    }, "rarity")
 
+# powerReplay = PowerReplay(5e3, 32, 1, {"estimatedReturn_alpha": 1}, "returns")
 trainer = AgentTrainer(
     agent,
     env,
