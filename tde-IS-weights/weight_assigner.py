@@ -17,6 +17,7 @@ class Weight_assigner:
         _fr_ratio_current_factor=0,
         _fr_ratio_global_factor=0,
         _trace_factor=0.1,
+        _trace_length=10,
         _staleness_factor=0,
     ):
 
@@ -27,10 +28,22 @@ class Weight_assigner:
         self.estimated_return_factor = _estimated_return_factor
         self.fr_ratio_current_factor = _fr_ratio_current_factor
         self.fr_ratio_global_factor = _fr_ratio_global_factor
-        self.trace_factor = _trace_factor
         self.staleness_factor = _staleness_factor
+        self.trace_factor = _trace_factor
+        self.trace_length = _trace_length
+        self.trace_multiplier_array = self.exponentially_decaying_array()
+
+    # returns a numpy array of decaying trace multipliers. eg. [0.1, 0.01, 0.001, 0.0001] etc
+
+    def exponentially_decaying_array(self):
+        decaying_array = self.trace_factor ** np.arange(self.trace_length)
+        decaying_array[0] = 0   # for the first element the decay will be 0
+        # as the traces will be added in reversed order
+        decaying_array = decaying_array[::-1]
+        return decaying_array
 
     # Function for each factor  : currently simplistic
+
     def tde_func(self, tde):
         return tde**self.tde_factor
 
@@ -54,9 +67,6 @@ class Weight_assigner:
         staleness = self.iteration_num - lastSampled
         return self.staleness_factor * staleness
 
-    def trace_func(self, trace_weight):
-        return self.trace_factor * trace_weight
-
     # calculates the weight without considering the trace got by the successor
     def without_trace_weight(self, chunk: Chunk):
         return (
@@ -69,7 +79,8 @@ class Weight_assigner:
         )
 
     # Assigns the weight to every chunk in the replay buffer
-    def set_weights(self, chunks, doTrace = True):     # added this because trace takes more time and so user may decide not to do it
+    # added this because trace takes more time and so user may decide not to do it
+    def set_weights(self, chunks, doTrace=True):
         # trace_multiplier = self.trace_factor
         # replay_size = len(self.replay_buffer.chunks)
 
@@ -99,35 +110,30 @@ class Weight_assigner:
             idx = chunk.chunk_id - init_id
             if idx >= 0:
                 self.replay_buffer.weights[idx] = weight
-                if doTrace: self.traceWeightsFrom(idx, self.trace_factor)
+                if doTrace:
+                    self.traceWeightsFrom(idx)
 
-    
     # will trace the weights of the chunk at this index to all the previous chunks of the same episode
-    def traceWeightsFrom(self, chunk_idx, trace_factor = 0.1):
-        chunk = self.replay_buffer.chunks[chunk_idx]
-        chunk_eps_id = chunk.episode_id
-        chunk_weight = chunk.weight
-        
-        i=0
-        trace = chunk_weight
-        while (chunk_idx-i >= 0):
-            prev_chunk = self.replay_buffer.chunks[chunk_idx - i]
-            prev_chunk_eps_id = prev_chunk.episode_id
-            
-            # the trace should be allowed to propagate in the same episode only
-            if (prev_chunk_eps_id != chunk_eps_id):
-                break
-            
-            else:
-                if (i==0) : 
-                    prev_chunk.weight += 0
-                    self.replay_buffer.weights[chunk_idx-i] += 0
-                else :
-                    trace *= trace_factor
-                    prev_chunk.weight += trace
-                    self.replay_buffer.weights[chunk_idx-i] += trace
-                i+=1
 
+    def traceWeightsFrom(self, chunk_idx):
+
+        # get the chunks weight which is going to be traced
+        chunk = self.replay_buffer.chunks[chunk_idx]
+        chunk_weight = self.replay_buffer.weights[chunk_idx]
+
+        # decide if the whole trace_length can be covered for this index
+        available_trace_length = chunk_idx + 1     # because of 0 indexing of chunks
+
+        final_trace_length = self.trace_length
+        if (available_trace_length < self.trace_length):
+            final_trace_length = available_trace_length
+
+        trace_multipliers = self.trace_multiplier_array[-final_trace_length:]
+
+        # prepare and add the traces
+        traces = trace_multipliers * chunk_weight
+        self.replay_buffer.weights[chunk_idx + 1 -
+                                   final_trace_length: chunk_idx+1] += traces
 
 
 class UniformAssigner:

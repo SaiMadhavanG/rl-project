@@ -15,23 +15,23 @@ class PowerReplay:
             self.weight_assigner = UniformAssigner(self.buffer)
         elif mode == "tde":
             self.weight_assigner = Weight_assigner(
-                self.buffer, _tde_factor=weight_factors["tde_alpha"], _trace_factor = weight_factors["trace_factor"],
+                self.buffer, _tde_factor=weight_factors["tde_alpha"], _trace_factor = weight_factors["trace_factor"], _trace_length= weight_factors["trace_length"],
             )
         elif mode == "rewards":
             self.weight_assigner = Weight_assigner(
-                self.buffer, _reward_factor=weight_factors["rewards_alpha"], _trace_factor = weight_factors["trace_factor"],
+                self.buffer, _reward_factor=weight_factors["rewards_alpha"], _trace_factor = weight_factors["trace_factor"],_trace_length= weight_factors["trace_length"],
             )
         elif mode == "returns":
             self.weight_assigner = Weight_assigner(
                 self.buffer,
-                _estimated_return_factor=weight_factors["estimatedReturn_alpha"], _trace_factor = weight_factors["trace_factor"],
+                _estimated_return_factor=weight_factors["estimatedReturn_alpha"], _trace_factor = weight_factors["trace_factor"],_trace_length= weight_factors["trace_length"],
             )
         elif mode == "combination":
             self.weight_assigner = Weight_assigner(
                 self.buffer,
                 _tde_factor=weight_factors["tde_alpha"],
                 _reward_factor=weight_factors["rewards_alpha"],
-                _estimated_return_factor=weight_factors["estimatedReturn_alpha"], _trace_factor = weight_factors["trace_factor"],
+                _estimated_return_factor=weight_factors["estimatedReturn_alpha"], _trace_factor = weight_factors["trace_factor"],_trace_length= weight_factors["trace_length"],
             )
         else:
             raise Exception("Implementation pending")

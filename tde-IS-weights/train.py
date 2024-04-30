@@ -10,9 +10,9 @@ device = "cpu"
 agent = DQNAgent(2, 4, device=device)
 env = CartPoleEnvironment()
 render_env = CartPoleEnvironment("human")
-logger = Logger("trace testing")
+logger = Logger("trace testing part 2")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=5e-4)
-powerReplay = PowerReplay(5e3, 32, 1, {"rewards_alpha": 1, "trace_factor" : 0.1}, "rewards")
+powerReplay = PowerReplay(5e3, 32, 1, {"rewards_alpha": 1, "trace_factor" : 0.1, "trace_length" : 10}, "rewards")
 
 trainer = AgentTrainer(
     agent,
