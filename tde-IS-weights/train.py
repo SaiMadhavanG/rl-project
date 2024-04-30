@@ -7,15 +7,27 @@ import torch
 
 device = "cuda"
 
-agent = DQNAgent(4, 8, device=device)
-env = LunarLanderEnvironment()
-render_env = LunarLanderEnvironment("render")
-logger = Logger("Lunar_Lander_IS_returns_only", path="../cartpole/runs/")
-optimizer = torch.optim.Adam(agent.network.parameters(), lr=1e-3)
-powerReplay = PowerReplay(5e3, 32, 1, {
-                                        "rarity_alpha": 2, 
-                                        "frequency_hist_ranges": [(i, j, 100) for i, j in zip(env.env.observation_space.low.tolist(), env.env.observation_space.high.tolist())]
-                                    }, "rarity")
+agent = DQNAgent(2, 4, device=device)
+env = CartPoleEnvironment()
+render_env = CartPoleEnvironment("human")
+logger = Logger("cartpole-rarity-is")
+optimizer = torch.optim.Adam(agent.network.parameters(), lr=5e-4)
+powerReplay = PowerReplay(
+    5e3,
+    32,
+    1,
+    {
+        "rarity_alpha": 2,
+        "frequency_hist_ranges": [
+            (i, j, (j - i) / 100)
+            for i, j in zip(
+                [-4.8, -100, -0.418, -100],
+                [4.8, 100, 0.418, 100],
+            )
+        ],
+    },
+    "rarity",
+)
 
 # powerReplay = PowerReplay(5e3, 32, 1, {"estimatedReturn_alpha": 1}, "returns")
 trainer = AgentTrainer(
@@ -25,12 +37,12 @@ trainer = AgentTrainer(
     optimizer,
     powerReplay,
     device=device,
-    epsilon=0.7,
+    epsilon=0.5,
     min_epsilon=0.1,
-    epsilon_decay=8e-4,
+    epsilon_decay=5e-4,
     gamma=1,
     update_frequency=5,
 )
 
 # pdb.set_trace()
-trainer.train_steps(2e5)
+trainer.train_steps(1e5)
