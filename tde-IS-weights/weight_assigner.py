@@ -67,8 +67,10 @@ class Weight_assigner:
         staleness = self.iteration_num - lastSampled
         return self.staleness_factor * staleness
 
-    def trace_func(self, trace_weight):
-        return self.trace_factor * trace_weight
+    def staleness_func(self, lastSampled, chunk_counter):
+        staleness = chunk_counter - lastSampled
+        normalized_staleness = staleness / staleness.max()
+        return self.staleness_factor * normalized_staleness
 
     # calculates the weight without considering the trace got by the successor
     def without_trace_weight(self, chunk: Chunk):
@@ -115,6 +117,9 @@ class Weight_assigner:
                 if doTrace:
                     self.traceWeightsFrom(idx)
 
+        normalized_staleness = self.staleness_func(lastSampled, chunk_counter)
+        self.replay_buffer.weights += normalized_staleness
+
     # will trace the weights of the chunk at this index to all the previous chunks of the same episode
 
     def traceWeightsFrom(self, chunk_idx):
@@ -137,9 +142,6 @@ class Weight_assigner:
         self.replay_buffer.weights[
             chunk_idx + 1 - final_trace_length : chunk_idx + 1
         ] += traces
-
-        normalized_staleness = self.staleness_func(lastSampled, chunk_counter)
-        self.replay_buffer.weights += normalized_staleness
 
     # Method to sweep the replay buffer and assign the probablity to each chunk
     # probablity = chunk weight/ summation of weight of each chunk present in the replay buffer

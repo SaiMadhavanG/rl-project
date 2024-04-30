@@ -10,17 +10,13 @@ device = "cuda"
 agent = DQNAgent(2, 4, device=device)
 env = CartPoleEnvironment()
 render_env = CartPoleEnvironment("human")
-logger = Logger("cartpole-tde-trace")
+logger = Logger("cartpole-tde-trace-staleness")
 optimizer = torch.optim.Adam(agent.network.parameters(), lr=5e-4)
 powerReplay = PowerReplay(
     5e3,
     32,
     1,
-    {
-        "trace_factor": 0.2,
-        "trace_length": 20,
-        "tde_alpha": 0.6,
-    },
+    {"trace_factor": 0.2, "trace_length": 20, "tde_alpha": 0.6, "staleness_alpha": 0.1},
     "tde",
 )
 

@@ -20,6 +20,7 @@ class PowerReplay:
                 _tde_factor=weight_factors["tde_alpha"],
                 _trace_factor=weight_factors["trace_factor"],
                 _trace_length=weight_factors["trace_length"],
+                _staleness_factor=weight_factors["staleness_alpha"],
             )
         elif mode == "rewards":
             self.weight_assigner = Weight_assigner(
@@ -27,6 +28,7 @@ class PowerReplay:
                 _reward_factor=weight_factors["rewards_alpha"],
                 _trace_factor=weight_factors["trace_factor"],
                 _trace_length=weight_factors["trace_length"],
+                _staleness_factor=weight_factors["staleness_alpha"],
             )
         elif mode == "returns":
             self.weight_assigner = Weight_assigner(
