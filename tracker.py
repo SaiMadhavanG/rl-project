@@ -7,6 +7,7 @@ class Tracker:
 
     def __init__(self, replay_buffer: ReplayBuffer):
         self.replay_buffer = replay_buffer
+        self.modified = []
 
     """
         Single chunk based assigner methods
@@ -14,14 +15,24 @@ class Tracker:
         For all of this the value to be assigned has to be provided by the user of this class
     """
 
-    def set_tde(self, chunk: Chunk, tde):
-        chunk.set_tde(tde)
+    def set_tde(self, chunk: Chunk):
+        tde = []
+        for transition in chunk.transitions:
+            tde.append(transition.tde)
+        chunk.set_tde(sum(tde) / len(tde))
+        self.modified.append(chunk)
 
-    def set_estimated_return(self, chunk: Chunk, estimated_return):
-        chunk.set_rewards(estimated_return)
+    def set_estimated_return(self, chunk: Chunk):
+        estimated_returns = []
+        for transition in chunk.transitions:
+            estimated_returns.append(transition.estimated_return)
+        chunk.set_estimated_return(sum(estimated_returns) / len(estimated_returns))
 
-    def set_rewards(self, chunk: Chunk, rewards):
-        chunk.set_rewards(rewards)
+    def set_rewards(self, chunk: Chunk):
+        rewards = []
+        for transition in chunk.transitions:
+            rewards.append(transition.reward)
+        chunk.set_rewards(sum(rewards) / len(rewards))
 
     def set_lastSampled(self, chunk: Chunk, lastSampled):
         chunk.set_lastSampled(lastSampled)

@@ -1,15 +1,15 @@
-from distutils.log import Log
 from agent import DQNAgent
 from agent_trainer import AgentTrainer
 from environment import CartPoleEnvironment
 from power_replay import PowerReplay
 from logger import Logger
+from tqdm.auto import tqdm
 
 device = "cuda"
 
 
-checkpoint_path = "C:/programming/projects/rl-project/tde-IS-weights/checkpoints/cartpole-uniform-uf5/checkpoint-400.pth"
-render_env = CartPoleEnvironment("human")
+checkpoint_path = "C:/programming/projects/rl-project/tde-IS-weights/checkpoints/cartpole-chunk-4/checkpoint-600.pth"
+render_env = CartPoleEnvironment()
 agent = DQNAgent(2, 4, device=device)
 logger = Logger("eval")
 
@@ -26,7 +26,9 @@ trainer = AgentTrainer(
 )
 trainer.load(checkpoint_path)
 scores = []
-for i in range(10):
-    scores.append(trainer.inference_mode())
+for i in tqdm(range(50)):
+    score = trainer.inference_mode()
+    scores.append(score)
+    print(score)
 
 print(f"Average score: {sum(scores)/len(scores):0.3f}")

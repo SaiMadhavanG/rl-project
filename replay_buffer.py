@@ -77,9 +77,12 @@ class ReplayBuffer:
             else None
         )
         self.frequncy_mode = _frequency_mode
+        self.weights = np.zeros(self.size)
 
     def addChunk(self, chunk):
         self.chunks.append(chunk)
+        self.weights[:-1] = self.weights[1:]
+        self.weights[-1] = chunk.weight
         if self.frequency_histogram:
             state_v = chunk.getAvgState()
             self.frequency_histogram.addOne(state_v)
@@ -106,4 +109,4 @@ class ReplayBuffer:
             raise Exception("Frequency histogram not initialized")
 
     def getProbabilities(self):
-        return [chunk.probablity for chunk in self.chunks]
+        return self.weights / self.weights.sum()
