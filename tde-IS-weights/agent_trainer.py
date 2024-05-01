@@ -60,7 +60,9 @@ class AgentTrainer:
         s1, s2 = y_true.shape
         pred_vals = y_pred[torch.arange(s1), self.actionsHistory]
         true_vals = y_true[torch.arange(s1), self.actionsHistory]
-        loss = torch.dot(((pred_vals - true_vals) ** 2 / s1), IS_weights.to(self.device))
+        loss = torch.dot(
+            ((pred_vals - true_vals) ** 2 / s1), IS_weights.to(self.device)
+        )
         # loss = F.mse_loss(
         #     y_pred[torch.arange(s1), self.actionsHistory],
         #     y_true[torch.arange(s1), self.actionsHistory],
@@ -118,7 +120,7 @@ class AgentTrainer:
             estimared_return_ = self.calculate_estimated_return(transition)
             transition.setTDE(tde_)
             transition.setEstimatedReturn(estimared_return_)
-            self.power_replay.addTransitions([transition], self.episode_id)
+            self.power_replay.addTransition(transition, self.episode_id)
             self.tracker.set_tde(self.power_replay.buffer.chunks[-1])
             self.tracker.set_rewards(self.power_replay.buffer.chunks[-1])
             state = next_state
@@ -139,9 +141,12 @@ class AgentTrainer:
                 nextStateBatch.to(self.device)
             )  # Compute Q-values for next states
 
-            Y = torch.zeros((self.power_replay.batch_size, self.agent.numActions)).to(
-                self.device
-            )
+            Y = torch.zeros(
+                (
+                    self.power_replay.batch_size * self.power_replay.chunk_size,
+                    self.agent.numActions,
+                )
+            ).to(self.device)
             QS = self.agent.network(currentStateBatch.to(self.device))
             self.actionsHistory = []
             rewards_batch = []
@@ -232,7 +237,7 @@ class AgentTrainer:
             transition = Transition(state, action, reward, next_state, done)
             tde_ = self.calculate_tde(transition)
             transition.setTDE(tde_)
-            self.power_replay.addTransitions([transition], self.episode_id)
+            self.power_replay.addTransition(transition, self.episode_id)
             self.tracker.set_tde(self.power_replay.buffer.chunks[-1])
             state = next_state
         self.power_replay.sweep(self.tracker)

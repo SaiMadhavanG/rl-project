@@ -58,11 +58,12 @@ class PowerReplay:
         self.chunk_size = chunk_size
         self.chunk_counter = 0
         self.lastSampled = np.zeros(self.size, dtype=int)
+        self.tempTransitions = []
 
     def samplable(self):
         return len(self.buffer.chunks) >= self.size
 
-    def getBatch(self, b=0):
+    def getBatch(self, b=0.0):
         chunks, chunk_IS_weights = self.sampler.sample(self.buffer, b=b)
         transition_IS_weights = torch.repeat_interleave(
             torch.tensor(chunk_IS_weights, dtype=torch.float), self.chunk_size
@@ -75,19 +76,17 @@ class PowerReplay:
             self.lastSampled[idx] = self.chunk_counter
         return transitions, chunks, transition_IS_weights
 
-    def addTransitions(self, transitions, episode_id):
-        # TODO handle chunk id for when more transitions
-        while len(transitions) > self.chunk_size:
-            raise Exception("Given transitions more than chunk size")
-            # chunk = Chunk(
-            #     self.chunk_size, episode_id, _transitions=transitions[: self.chunk_size]
-            # )
-            # self.buffer.addChunk(chunk)
-            # for i in range(self.chunk_size):
-            #     transitions.pop(0)
+    def addTransition(self, transition, episode_id):
+        self.tempTransitions.append(transition)
+        if len(self.tempTransitions) == self.chunk_size + 1:
+            self.tempTransitions.pop(0)
         chunk = Chunk(
-            self.chunk_size, self.chunk_counter, episode_id, _transitions=transitions
+            self.chunk_size,
+            self.chunk_counter,
+            episode_id,
+            _transitions=self.tempTransitions,
         )
+        chunk.pad_transitions()
         self.buffer.addChunk(chunk)
         self.lastSampled[:-1] = self.lastSampled[1:]
         self.lastSampled[-1] = int(self.lastSampled.mean())
