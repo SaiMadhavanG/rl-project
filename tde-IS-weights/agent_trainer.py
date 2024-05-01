@@ -256,7 +256,7 @@ class AgentTrainer:
         """
         Load the target network from a file
         """
-        self.agent.targetNetwork.load(path)
+        self.agent.targetNetwork.load_state_dict(torch.load(path))
 
     def inference_mode(self):
         """
